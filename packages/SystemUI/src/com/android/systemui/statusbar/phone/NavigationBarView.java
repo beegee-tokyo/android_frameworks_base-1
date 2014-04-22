@@ -929,10 +929,13 @@ Slog.d("NavBarPos","myNavBarPosSet was unknown, corrected to center");
             resolver.registerContentObserver(
                 Settings.System.getUriFor(Settings.System.LOCKSCREEN_MODLOCK_ENABLED),
                 false, this);
+<<<<<<< HEAD
 				/** BEEGEE_TOKYO_PATCH_START **/
             resolver.registerContentObserver(Settings.System.getUriFor(
                 Settings.System.NAV_BAR_POS), false, this);
 				/** BEEGEE_TOKYO_PATCH_END **/
+=======
+>>>>>>> upstream/android-4.4
 
             // intialize mModlockDisabled
             onChange(false);
