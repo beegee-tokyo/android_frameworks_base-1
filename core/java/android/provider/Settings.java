@@ -4112,6 +4112,10 @@ public final class Settings {
          */
         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
+        /** BEEGEE_TOKYO_PATCH_START **/
+        public static final String NAV_BAR_POS = "nav_bar_pos";
+        /** BEEGEE_TOKYO_PATCH_END **/
+
         /**
          * toggle to "fix" the following: (found in NotificationManagerService)
          *  new in 4.2: if there was supposed to be a sound and we're in vibrate mode,

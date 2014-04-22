@@ -83,6 +83,11 @@ import com.android.systemui.statusbar.policy.NotificationRowLayout;
 import java.util.ArrayList;
 import java.util.Locale;
 
+// **** BEEGEE_TOKYO_PATCH_START ****
+import android.util.Slog;
+import android.provider.Settings;
+// **** BEEGEE_TOKYO_PATCH_END ****
+
 public abstract class BaseStatusBar extends SystemUI implements
         CommandQueue.Callbacks {
     public static final String TAG = "StatusBar";
@@ -210,11 +215,18 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.EXPANDED_DESKTOP_STYLE), false, this);
             resolver.registerContentObserver(Settings.Nameless.getUriFor(
                     Settings.Nameless.NEW_RECENTS_SCREEN), false, this);
+            /** BEEGEE_TOKYO_PATCH_START **/
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAV_BAR_POS), false, this);
+            /** BEEGEE_TOKYO_PATCH_END **/
             update();
         }
 
         @Override
         public void onChange(boolean selfChange) {
+            /** BEEGEE_TOKYO_PATCH_START **/
+            android.os.Process.killProcess(android.os.Process.myPid());
+            /** BEEGEE_TOKYO_PATCH_END **/
             update();
         }
 
