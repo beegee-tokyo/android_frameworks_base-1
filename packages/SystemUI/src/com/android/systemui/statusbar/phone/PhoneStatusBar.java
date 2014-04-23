@@ -848,15 +848,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         setAreThereNotifications();
 
         // Other icons
-<<<<<<< HEAD
-        if (mLocationController == null) mLocationController = new LocationController(mContext);
-        if (mBatteryController == null) mBatteryController = new BatteryController(mContext);
-        if (mDockBatteryController == null) mDockBatteryController = new DockBatteryController(mContext);
-        if (mBluetoothController == null) mBluetoothController = new BluetoothController(mContext);
-        if (mRotationLockController == null) mRotationLockController = new RotationLockController(mContext);
-
-=======
->>>>>>> upstream/android-4.4
         mBatteryView = (BatteryMeterView) mStatusBarView.findViewById(R.id.battery);
         mDockBatteryView = (DockBatteryMeterView) mStatusBarView.findViewById(R.id.dock_battery);
 
