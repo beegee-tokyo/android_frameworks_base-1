@@ -98,6 +98,9 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+/** BEEGEE_TOKYO_PATCH_START **/
+import android.widget.ImageView;
+/** BEEGEE_TOKYO_PATCH_END **/
 
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.systemui.BatteryMeterView.BatteryMeterMode;
@@ -353,6 +356,14 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     boolean mTransparentNav = false;
 
+/** BEEGEE_TOKYO_PATCH_START **/
+    View mTop_recent;
+    View mTop_home;
+    View mTop_back;
+    View mTop_menu;
+    int mStatusBarNav;
+/** BEEGEE_TOKYO_PATCH_END **/
+
     // XXX: gesture research
     private final GestureRecorder mGestureRec = DEBUG_GESTURES
         ? new GestureRecorder("/sdcard/statusbar_gestures.dat")
@@ -428,6 +439,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVBAR_LEFT_IN_LANDSCAPE),
                     false, this, UserHandle.USER_ALL);
+/** BEEGEE_TOKYO_PATCH_START **/
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_NAVIGATION), false, this);
+/** BEEGEE_TOKYO_PATCH_END **/
             updateSettings();
         }
 
@@ -705,6 +720,44 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         }
         mStatusBarView.setBar(this);
 
+/** BEEGEE_TOKYO_PATCH_START **/
+/** Check if we are in Expanded Desktop Mode and enable Navigation buttons if we are
+    and disable them when the bottom navigation bar is visible
+    but only if the user enabled it in settings 
+    but if we are not a tablet, just ignore this! **/
+
+	if (mNavigationBarView != null) { /** Does the device show a navigation bar at all? **/
+//Slog.d("TopNavBar", "mNavigationBarView != null" + mNavigationBarView);
+	    mTop_recent = mStatusBarWindow.findViewById(R.id.top_recent);
+	    mTop_home = mStatusBarWindow.findViewById(R.id.top_home);
+	    mTop_back = mStatusBarWindow.findViewById(R.id.top_back);
+	    mTop_menu = mStatusBarWindow.findViewById(R.id.top_menu);
+	    if (mStatusBarNav == 0) { /** Is the navigation in the status bar enabled? **/
+//Slog.d("TopNavBar", "mStatusBarNav == 0" + mStatusBarNav);
+//Slog.d("TopNavBar", "getExpandedDesktopMode = " + (getExpandedDesktopMode()));
+		if (getExpandedDesktopMode() == 1) {
+//Slog.d("TopNavBar", "Switch nav buttons on (makeStatusBarView)");
+		    mTop_recent.setVisibility(View.VISIBLE);
+		    mTop_home.setVisibility(View.VISIBLE);
+		    mTop_back.setVisibility(View.VISIBLE);
+		    mTop_menu.setVisibility(View.VISIBLE);
+		} else {
+//Slog.d("TopNavBar", "Switch nav buttons off (makeStatusBarView)");
+		    mTop_recent.setVisibility(View.GONE);
+		    mTop_home.setVisibility(View.GONE);
+		    mTop_back.setVisibility(View.GONE);
+		    mTop_menu.setVisibility(View.GONE);
+		}
+	    } else { /** Navigation in the status bar is disabled? **/
+//Slog.d("TopNavBar", "Switch nav buttons off (makeStatusBarView)");
+		mTop_recent.setVisibility(View.GONE);
+		mTop_home.setVisibility(View.GONE);
+		mTop_back.setVisibility(View.GONE);
+		mTop_menu.setVisibility(View.GONE);
+	    }
+        }
+/** BEEGEE_TOKYO_PATCH_END **/
+  
         PanelHolder holder;
         if (MSimTelephonyManager.getDefault().isMultiSimEnabled()) {
             holder = (PanelHolder) mStatusBarWindow.findViewById(R.id.msim_panel_holder);
@@ -2804,6 +2857,18 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mNavigationBarView.setMenuVisibility(showMenu);
         }
 
+/** BEEGEE_TOKYO_PATCH_START **/
+/** Check if we are in Expanded Desktop Mode and Navigation buttons are enabled
+	if app requests menu button then show it **/
+		if (mNavigationBarView != null) {
+			mTop_menu = mStatusBarWindow.findViewById(R.id.top_menu);
+			if (mStatusBarNav == 0) { /** Is the navigation in the status bar enabled? **/
+				if (getExpandedDesktopMode() == 1) { /** Is the expanded desktop enabled? **/
+					mTop_menu.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+				}
+			}
+		}
+/** BEEGEE_TOKYO_PATCH_END **/
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);
     }
@@ -2817,6 +2882,16 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 altBack ? (mNavigationIconHints | NAVIGATION_HINT_BACK_ALT)
                         : (mNavigationIconHints & ~NAVIGATION_HINT_BACK_ALT));
         if (mQS != null) mQS.setImeWindowStatus(vis > 0);
+/** BEEGEE_TOKYO_PATCH_START **/
+		if (mNavigationBarView != null) {
+			if (mStatusBarNav == 0) { /** Is the navigation in the status bar enabled? **/
+				if (getExpandedDesktopMode() == 1) { /** Is the expanded desktop enabled? **/
+					ImageView mImg_Top_back = (ImageView) mStatusBarWindow.findViewById(R.id.top_back);
+					mImg_Top_back.setImageResource(altBack ? R.drawable.gan_ic_sysbar_back_ime : R.drawable.gan_ic_sysbar_back);
+				}
+			}
+		}
+/** BEEGEE_TOKYO_PATCH_END **/
     }
 
     @Override
@@ -3114,6 +3189,42 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         }
 
         updateCarrierLabelVisibility(false);
+/** BEEGEE_TOKYO_PATCH_START **/
+/** Check if we are in Expanded Desktop Mode and enable Navigation buttons if we are
+    and disable them when the bottom navigation bar is visible 
+    but only if the user enabled it in settings
+    but if we are not a tablet, just ignore this! **/
+
+	if (mNavigationBarView != null) { /** Does the device show a navigation bar at all? **/
+//Slog.d("TopNavBar", "mNavigationBarView != null" + mNavigationBarView);
+	    mTop_recent = mStatusBarWindow.findViewById(R.id.top_recent);
+	    mTop_home = mStatusBarWindow.findViewById(R.id.top_home);
+	    mTop_back = mStatusBarWindow.findViewById(R.id.top_back);
+	    mTop_menu = mStatusBarWindow.findViewById(R.id.top_menu);
+	    if (mStatusBarNav == 0) { /** Is the navigation in the status bar enabled? **/
+//Slog.d("TopNavBar", "mStatusBarNav == 0" + mStatusBarNav);
+//Slog.d("TopNavBar", "getExpandedDesktopMode = " + (getExpandedDesktopMode()));
+		if (getExpandedDesktopMode() == 1) {
+//Slog.d("TopNavBar", "Switch nav buttons on (makeStatusBarView)");
+		    mTop_recent.setVisibility(View.VISIBLE);
+		    mTop_home.setVisibility(View.VISIBLE);
+		    mTop_back.setVisibility(View.VISIBLE);
+		} else {
+//Slog.d("TopNavBar", "Switch nav buttons off (makeStatusBarView)");
+		    mTop_recent.setVisibility(View.GONE);
+		    mTop_home.setVisibility(View.GONE);
+		    mTop_back.setVisibility(View.GONE);
+		    mTop_menu.setVisibility(View.GONE);
+		}
+	    } else { /** Navigation in the status bar is disabled? **/
+//Slog.d("TopNavBar", "Switch nav buttons off (makeStatusBarView)");
+		mTop_recent.setVisibility(View.GONE);
+		mTop_home.setVisibility(View.GONE);
+		mTop_back.setVisibility(View.GONE);
+		mTop_menu.setVisibility(View.GONE);
+	    }
+	}
+/** BEEGEE_TOKYO_PATCH_END **/
     }
 
     // called by makeStatusbar and also by PhoneStatusBarView
@@ -3369,6 +3480,12 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mSignalClusterView.setStyle(signalStyle);
             mSignalTextView.setStyle(signalStyle);
         }
+/** BEEGEE_TOKYO_PATCH_START **/
+        mStatusBarNav = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_NAVIGATION, 0, UserHandle.USER_CURRENT);
+        updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
+//Slog.d("TopNavBar", "get current value mStatusBarNav = " + mStatusBarNav);
+/** EEGEE_TOKYO_PATCH_END **/
     }
 
     private void resetUserSetupObserver() {
