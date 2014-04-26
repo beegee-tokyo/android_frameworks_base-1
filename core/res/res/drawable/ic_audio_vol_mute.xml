@@ -18,6 +18,8 @@
 -->
 
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-        android:src="@drawable/ic_audio_vol_mute_am"
+        android:src="@drawable/ic_lock_silent_mode_off"
         android:autoMirrored="true">
 </bitmap>
+/*         android:src="@drawable/ic_audio_vol_mute_am"
+*/
