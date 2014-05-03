@@ -534,6 +534,8 @@
   <java-symbol type="string" name="emergency_call_dialog_number_for_display" />
   <java-symbol type="string" name="widget_default_package_name" />
   <java-symbol type="string" name="widget_default_class_name" />
+  <java-symbol type="string" name="config_keyguardPackage" />
+  <java-symbol type="string" name="config_keyguardService" />
   <java-symbol type="string" name="emergency_calls_only" />
   <java-symbol type="string" name="enable_accessibility_canceled" />
   <java-symbol type="string" name="eventTypeAnniversary" />
@@ -651,7 +653,6 @@
   <java-symbol type="string" name="orgTypeWork" />
   <java-symbol type="string" name="passwordIncorrect" />
   <java-symbol type="string" name="enablePin" />
-  <java-symbol type="string" name="permission" />
   <java-symbol type="string" name="perms_description_app" />
   <java-symbol type="string" name="perms_new_perm_prefix" />
   <java-symbol type="string" name="petabyteShort" />
