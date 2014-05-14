@@ -43,6 +43,7 @@
             android:background="@drawable/silent_mode_indicator"
             />
     </LinearLayout>
+
     <!-- Spacer -->
     <View android:layout_width="0dp"
         android:layout_height="match_parent"

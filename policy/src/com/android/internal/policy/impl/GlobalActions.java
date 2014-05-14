@@ -1196,7 +1196,13 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             int selectedIndex = ringerModeToIndex(mAudioManager.getRingerMode());
             for (int i = 0; i < 3; i++) {
                 View itemView = v.findViewById(ITEM_IDS[i]);
-                itemView.setSelected(selectedIndex == i);
+/** BEEGEE_TOKYO_PATCH_START **/
+    /* There is a problem how the selected item is shown, it shows a white bar instead of grey
+     * background. Reason needs to be found.
+     * Until then, work-around is to not pre-select the current status
+     */
+//                itemView.setSelected(selectedIndex == i);
+/** BEEGEE_TOKYO_PATCH_END **/
                 // Set up click handler
                 itemView.setTag(i);
                 itemView.setOnClickListener(this);

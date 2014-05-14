@@ -1290,6 +1290,19 @@ public abstract class BaseStatusBar extends SystemUI implements
         return KeyguardTouchDelegate.getInstance(mContext).isInputRestricted();
     }
 
+/** BEEGEE_TOKYO_PATCH_START **/
+    public int getExpandedDesktopMode() {
+        ContentResolver resolver = mContext.getContentResolver();
+        boolean expanded = Settings.System.getIntForUser(resolver,
+                Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1;
+        if (expanded) {
+            return Settings.System.getIntForUser(resolver,
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT);
+        }
+        return 0;
+    }
+/** BEEGEE_TOKYO_PATCH_END **/
+
     public void setInteracting(int barWindow, boolean interacting) {
         // hook for subclasses
     }
