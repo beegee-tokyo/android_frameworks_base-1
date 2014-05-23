@@ -1215,6 +1215,11 @@ public final class Settings {
             return putStringForUser(cr, name, value ? "1" : "0", userHandle);
         }
 
+        /**
+         * Enable or disable global crash reporting
+         *
+         * @hide
+         */
         public static final String ENABLE_ACRA = "enable_acra";
 
         /**
@@ -1260,6 +1265,13 @@ public final class Settings {
          * @hide
          */
         public static final String FORCE_MULTI_PANE = "force_multi_pane";
+
+        /**
+         * The delay when killing the app on long press takes place
+         *
+         * @hide
+         */
+        public static final String LONG_PRESS_KILL_DELAY = "long_press_kill_delay";
     }
 
     /**
@@ -2079,6 +2091,13 @@ public final class Settings {
          */
         public static final String BLUETOOTH_DISCOVERABILITY =
                 "bluetooth_discoverability";
+
+        /**
+         * If all file types can be accepted over Bluetooth OBEX.
+         * @hide
+         */
+        public static final String BLUETOOTH_ACCEPT_ALL_FILES =
+            "bluetooth_accept_all_files";
 
         /**
          * Bluetooth discoverability timeout.  If this value is nonzero, then
@@ -4405,6 +4424,7 @@ public final class Settings {
             MMS_AUTO_RETRIEVAL_ON_ROAMING,
             BLUETOOTH_DISCOVERABILITY,
             BLUETOOTH_DISCOVERABILITY_TIMEOUT,
+            BLUETOOTH_ACCEPT_ALL_FILES,
             DIM_SCREEN,
             SCREEN_OFF_TIMEOUT,
             SCREEN_BRIGHTNESS,
@@ -6523,6 +6543,30 @@ public final class Settings {
          * @hide
          */
         public static final String PRIVACY_GUARD_NOTIFICATION = "privacy_guard_notification";
+
+       /**
+         * Default theme to use.  If empty, use holo.
+         * @hide
+         */
+        public static final String DEFAULT_THEME_PACKAGE = "default_theme_package";
+
+        /**
+         * A '|' delimited list of theme components to apply from the default theme on first boot.
+         * Components can be one or more of the "mods_XXXXXXX" found in
+         * {@link ThemesContract$ThemesColumns}.  Leaving this field blank assumes all components
+         * will be applied.
+         *
+         * ex: mods_icons|mods_overlays|mods_homescreen
+         *
+         * @hide
+         */
+        public static final String DEFAULT_THEME_COMPONENTS = "default_theme_components";
+
+        /**
+         * Whether the default theme was applied on the first boot.
+         * @hide
+         */
+        public static final String DEFAULT_THEME_APPLIED_ON_FIRST_BOOT = "default_theme_applied_on_first_boot";
 
         /**
          * This are the settings to be backed up.
