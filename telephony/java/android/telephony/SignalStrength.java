@@ -513,10 +513,12 @@ public class SignalStrength implements Parcelable {
 
         if (isGsm) {
             boolean lteChecks = (getLteRsrp() == INVALID && getLteRsrq() == INVALID && getLteRssnr() == INVALID && getLteSignalStrength() == 99);
-            boolean oldRil = needsOldRilFeature("signalstrength");
+				// BEEGEE_TOKYO temporary work around for problem in last commit
+            boolean otherSignals = needsOldRilFeature("signalstrength") || getTdScdmaLevel() != SIGNAL_STRENGTH_NONE_OR_UNKNOWN; //boolean oldRil = needsOldRilFeature("signalstrength");
             level = getLteLevel();
-            if ((level == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && ((getGsmAsuLevel() != 99 && lteChecks)
-                   || getTdScdmaLevel() != SIGNAL_STRENGTH_NONE_OR_UNKNOWN) || oldRil) {
+				// BEEGEE_TOKYO temporary work around for problem in last commit
+            if ((level == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && getGsmAsuLevel() != 99 && lteChecks) || otherSignals) { //if ((level == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && ((getGsmAsuLevel() != 99 && lteChecks)
+                   // || getTdScdmaLevel() != SIGNAL_STRENGTH_NONE_OR_UNKNOWN) || oldRil) {
                 level = getTdScdmaLevel();
                 if (level == SIGNAL_STRENGTH_NONE_OR_UNKNOWN) {
                     level = getGsmLevel();
@@ -548,10 +550,12 @@ public class SignalStrength implements Parcelable {
     public int getAsuLevel() {
         int asuLevel = 0;
         if (isGsm) {
-            boolean oldRil = needsOldRilFeature("signalstrength");
+				// BEEGEE_TOKYO temporary work around for problem in last commit
+            boolean otherSignals = needsOldRilFeature("signalstrength") || getTdScdmaLevel() != SIGNAL_STRENGTH_NONE_OR_UNKNOWN; //boolean oldRil = needsOldRilFeature("signalstrength");
             boolean lteChecks = (getLteRsrp() == INVALID && getLteRsrq() == INVALID && getLteRssnr() == INVALID && getLteSignalStrength() == 99);
-            if ((getLteLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && ( (getGsmAsuLevel() != 99 &&
-                   lteChecks) || getTdScdmaAsuLevel() != 99 ) || oldRil) {
+				// BEEGEE_TOKYO temporary work around for problem in last commit
+            if ((getLteLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && getGsmAsuLevel() != 99 && lteChecks) || otherSignals) { //if ((getLteLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && ( (getGsmAsuLevel() != 99 &&
+                   //lteChecks) || getTdScdmaAsuLevel() != 99 ) || oldRil) {
                 if (getTdScdmaLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN) {
                     asuLevel = getGsmAsuLevel();
                 } else {
@@ -587,10 +591,12 @@ public class SignalStrength implements Parcelable {
         int dBm = INVALID;
 
         if(isGsm()) {
-            boolean oldRil = needsOldRilFeature("signalstrength");
+				// BEEGEE_TOKYO temporary work around for problem in last commit
+            boolean otherSignals = needsOldRilFeature("signalstrength") || getTdScdmaLevel() != SIGNAL_STRENGTH_NONE_OR_UNKNOWN; //boolean oldRil = needsOldRilFeature("signalstrength");
             boolean lteChecks = (getLteRsrp() == INVALID && getLteRsrq() == INVALID && getLteRssnr() == INVALID && getLteSignalStrength() == 99);
-            if ((getLteLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && ( (getGsmAsuLevel() != 99 && lteChecks)
-                    || getTdScdmaAsuLevel() != 99 ) || oldRil) {
+				// BEEGEE_TOKYO temporary work around for problem in last commit
+            if ((getLteLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && getGsmAsuLevel() != 99 && lteChecks) || otherSignals) { //if ((getLteLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN && ( (getGsmAsuLevel() != 99 && lteChecks)
+                    //|| getTdScdmaAsuLevel() != 99 ) || oldRil) {
                 if (getTdScdmaLevel() == SIGNAL_STRENGTH_NONE_OR_UNKNOWN) {
                     dBm = getGsmDbm();
                 } else {
