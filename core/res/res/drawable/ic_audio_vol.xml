@@ -21,4 +21,3 @@
         android:src="@drawable/ic_audio_vol_am"
         android:autoMirrored="true">
 </bitmap>
-

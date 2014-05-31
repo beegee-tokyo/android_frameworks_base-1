@@ -98,9 +98,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-/** BEEGEE_TOKYO_PATCH_START **/
-import android.widget.ImageView;
-/** BEEGEE_TOKYO_PATCH_END **/
 
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.systemui.BatteryMeterView.BatteryMeterMode;

@@ -515,23 +515,23 @@ public class NavigationBarView extends LinearLayout {
     public void setButtonDrawable(int buttonId, final int iconId) {
         final ImageView iv = (ImageView)getNotifsButton();
         mHandler.post(new Runnable() {
-				public void run() {
+            public void run() {
         /** BEEGEE_TOKYO_PATCH_START **/
 					ContentResolver resolver = mContext.getContentResolver();
 					int myNavBarPosSet = Settings.System.getInt(resolver, Settings.System.NAV_BAR_POS, 3);
 Slog.d("NavBarPos","setButtonDrawable myNavBarPosSet = "+myNavBarPosSet);
 					if (myNavBarPosSet !=0 && myNavBarPosSet !=1 ) {
-						if (iconId == 1) iv.setImageResource(R.drawable.search_light_land);
-						else iv.setImageDrawable(mVertical ? mRecentAltLandIcon : mRecentAltIcon);
-						mWasNotifsButtonVisible = iconId != 0 && ((mDisabledFlags & View.STATUS_BAR_DISABLE_HOME) != 0);
-						setVisibleOrGone(getNotifsButton(), mWasNotifsButtonVisible);
+                if (iconId == 1) iv.setImageResource(R.drawable.search_light_land);
+                else iv.setImageDrawable(mVertical ? mRecentAltLandIcon : mRecentAltIcon);
+                mWasNotifsButtonVisible = iconId != 0 && ((mDisabledFlags & View.STATUS_BAR_DISABLE_HOME) != 0);
+                setVisibleOrGone(getNotifsButton(), mWasNotifsButtonVisible);
 					}
         /** BEEGEE_TOKYO_PATCH_END **/
-				}
+            }
         });
     }
 
-    public int setButtonDrawable() {
+    public int getNavigationIconHints() {
         return mNavigationIconHints;
     }
 
