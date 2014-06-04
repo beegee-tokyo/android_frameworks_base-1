@@ -25,7 +25,6 @@
     android:background="@drawable/system_bar_background"
     >
 
-    <!-- layout for portrait -->
     <FrameLayout android:id="@+id/rot0"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
@@ -128,7 +127,6 @@
             />
     </FrameLayout>
 
-    <!-- layout for portrait -->
     <FrameLayout android:id="@+id/rot90"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
@@ -238,6 +236,7 @@
             />
     </FrameLayout>
 
+    <!-- BEEGEE_PATCH_END -->
     <!-- layout for portrait nav bar left -->
     <FrameLayout android:id="@+id/rot90left"
         android:layout_height="match_parent"
@@ -457,6 +456,7 @@
             android:layout_gravity="top"
             />
     </FrameLayout>
+    <!-- BEEGEE_PATCH_END -->
 
     <!-- not used -->
     <View android:id="@+id/rot270"

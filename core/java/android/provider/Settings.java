@@ -3477,14 +3477,14 @@ public final class Settings {
          */
         public static final String STATUS_BAR_BRIGHTNESS_CONTROL = "status_bar_brightness_control";
 
-/** BEEGEE_TOKYO_PATCH_START **/
+/** BEEGEE_PATCH_START **/
          /**
           * Whether to enable navigation on the  status bar
           *
           * @hide
           */
         public static final String STATUS_BAR_NAVIGATION = "status_bar_navigation";
-/** BEEGEE_TOKYO_PATCH_END **/
+/** BEEGEE_PATCH_END **/
         /**
          * Disable FC Notifications
          * @hide
@@ -4164,9 +4164,9 @@ public final class Settings {
          */
         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
-        /** BEEGEE_TOKYO_PATCH_START **/
+        /** BEEGEE_PATCH_START **/
         public static final String NAV_BAR_POS = "nav_bar_pos";
-        /** BEEGEE_TOKYO_PATCH_END **/
+        /** BEEGEE_PATCH_END **/
 
         /**
          * toggle to "fix" the following: (found in NotificationManagerService)

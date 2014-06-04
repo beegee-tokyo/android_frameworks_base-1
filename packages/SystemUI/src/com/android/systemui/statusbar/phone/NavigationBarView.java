@@ -68,10 +68,10 @@ import com.android.systemui.statusbar.policy.KeyButtonView;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 
-// **** BEEGEE_TOKYO_PATCH_START ****
+// **** BEEGEE_PATCH_START ****
 import android.util.Slog;
 import android.provider.Settings;
-// **** BEEGEE_TOKYO_PATCH_END ****
+// **** BEEGEE_PATCH_END ****
 
 public class NavigationBarView extends LinearLayout {
     final static boolean DEBUG = false;
@@ -516,17 +516,17 @@ public class NavigationBarView extends LinearLayout {
         final ImageView iv = (ImageView)getNotifsButton();
         mHandler.post(new Runnable() {
             public void run() {
-        /** BEEGEE_TOKYO_PATCH_START **/
+        /** BEEGEE_PATCH_START **/
 					ContentResolver resolver = mContext.getContentResolver();
 					int myNavBarPosSet = Settings.System.getInt(resolver, Settings.System.NAV_BAR_POS, 3);
-Slog.d("NavBarPos","setButtonDrawable myNavBarPosSet = "+myNavBarPosSet);
+//Slog.d("NavBarPos","setButtonDrawable myNavBarPosSet = "+myNavBarPosSet);
 					if (myNavBarPosSet !=0 && myNavBarPosSet !=1 ) {
                 if (iconId == 1) iv.setImageResource(R.drawable.search_light_land);
                 else iv.setImageDrawable(mVertical ? mRecentAltLandIcon : mRecentAltIcon);
                 mWasNotifsButtonVisible = iconId != 0 && ((mDisabledFlags & View.STATUS_BAR_DISABLE_HOME) != 0);
                 setVisibleOrGone(getNotifsButton(), mWasNotifsButtonVisible);
 					}
-        /** BEEGEE_TOKYO_PATCH_END **/
+        /** BEEGEE_PATCH_END **/
             }
         });
     }
@@ -650,31 +650,31 @@ Slog.d("NavBarPos","setButtonDrawable myNavBarPosSet = "+myNavBarPosSet);
     @Override
     public void onFinishInflate() {
         mRotatedViews[Configuration.ORIENTATION_PORTRAIT] = findViewById(R.id.rot0);
-        /** BEEGEE_TOKYO_PATCH_START **/
+        /** BEEGEE_PATCH_START **/
         //mRotatedViews[Configuration.ORIENTATION_LANDSCAPE] = findViewById(R.id.rot90);
         // check properties for the selected navigation bar position. 
         // Will be centered if not selected!
         ContentResolver resolver = mContext.getContentResolver();
         int myNavBarPosSet = Settings.System.getInt(resolver, Settings.System.NAV_BAR_POS, 3);
-Slog.d("NavBarPos","navbar_pos_set = "+myNavBarPosSet);
+//Slog.d("NavBarPos","navbar_pos_set = "+myNavBarPosSet);
         switch (myNavBarPosSet) {
 				case 0: mRotatedViews[Configuration.ORIENTATION_LANDSCAPE] = findViewById(R.id.rot90left);
-Slog.d("NavBarPos","myNavBarPosSet case left");
+//Slog.d("NavBarPos","myNavBarPosSet case left");
 				break;
 				case 1: mRotatedViews[Configuration.ORIENTATION_LANDSCAPE] = findViewById(R.id.rot90right);
-Slog.d("NavBarPos","myNavBarPosSet case right");
+//Slog.d("NavBarPos","myNavBarPosSet case right");
 				break;
 				case 2: mRotatedViews[Configuration.ORIENTATION_LANDSCAPE] = findViewById(R.id.rot90);
-Slog.d("NavBarPos","myNavBarPosSet case center");
+//Slog.d("NavBarPos","myNavBarPosSet case center");
 				break;
 				case 4: mRotatedViews[Configuration.ORIENTATION_LANDSCAPE] = findViewById(R.id.rot90);
-Slog.d("NavBarPos","myNavBarPosSet not available because not tablet GT-P75xx");
+//Slog.d("NavBarPos","myNavBarPosSet not available because not tablet GT-P75xx");
 				break;
 				default: mRotatedViews[Configuration.ORIENTATION_LANDSCAPE] = findViewById(R.id.rot90);
-Slog.d("NavBarPos","myNavBarPosSet was unknown, corrected to center");
+//Slog.d("NavBarPos","myNavBarPosSet was unknown, corrected to center");
 				break;
         }
-        /** BEEGEE_TOKYO_PATCH_END **/
+        /** BEEGEE_PATCH_END **/
         mCurrentView = mRotatedViews[mContext.getResources().getConfiguration().orientation];
 
         watchForAccessibilityChanges();
@@ -955,10 +955,10 @@ Slog.d("NavBarPos","myNavBarPosSet was unknown, corrected to center");
             resolver.registerContentObserver(
                 Settings.System.getUriFor(Settings.System.LOCKSCREEN_MODLOCK_ENABLED),
                 false, this);
-				/** BEEGEE_TOKYO_PATCH_START **/
+				/** BEEGEE_PATCH_START **/
             resolver.registerContentObserver(Settings.System.getUriFor(
                 Settings.System.NAV_BAR_POS), false, this);
-				/** BEEGEE_TOKYO_PATCH_END **/
+				/** BEEGEE_PATCH_END **/
 
             // intialize mModlockDisabled
             onChange(false);

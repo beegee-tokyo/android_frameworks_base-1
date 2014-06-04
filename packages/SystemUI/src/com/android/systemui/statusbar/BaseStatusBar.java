@@ -83,10 +83,10 @@ import com.android.systemui.statusbar.policy.NotificationRowLayout;
 import java.util.ArrayList;
 import java.util.Locale;
 
-// **** BEEGEE_TOKYO_PATCH_START ****
+// **** BEEGEE_PATCH_START ****
 import android.util.Slog;
 import android.provider.Settings;
-// **** BEEGEE_TOKYO_PATCH_END ****
+// **** BEEGEE_PATCH_END ****
 
 public abstract class BaseStatusBar extends SystemUI implements
         CommandQueue.Callbacks {
@@ -215,18 +215,19 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.EXPANDED_DESKTOP_STYLE), false, this);
             resolver.registerContentObserver(Settings.Nameless.getUriFor(
                     Settings.Nameless.NEW_RECENTS_SCREEN), false, this);
-            /** BEEGEE_TOKYO_PATCH_START **/
+            /** BEEGEE_PATCH_START **/
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAV_BAR_POS), false, this);
-            /** BEEGEE_TOKYO_PATCH_END **/
+            /** BEEGEE_PATCH_END **/
             update();
         }
 
         @Override
         public void onChange(boolean selfChange) {
-            /** BEEGEE_TOKYO_PATCH_START **/
-            android.os.Process.killProcess(android.os.Process.myPid());
-            /** BEEGEE_TOKYO_PATCH_END **/
+            /** BEEGEE_PATCH_START **/
+            /** To take over changes without reboot! **/
+             android.os.Process.killProcess(android.os.Process.myPid());
+            /** BEEGEE_PATCH_END **/
             update();
         }
 
@@ -1290,7 +1291,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         return KeyguardTouchDelegate.getInstance(mContext).isInputRestricted();
     }
 
-/** BEEGEE_TOKYO_PATCH_START **/
+/** BEEGEE_PATCH_START **/
     public int getExpandedDesktopMode() {
         ContentResolver resolver = mContext.getContentResolver();
         boolean expanded = Settings.System.getIntForUser(resolver,
@@ -1301,7 +1302,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
         return 0;
     }
-/** BEEGEE_TOKYO_PATCH_END **/
+/** BEEGEE_PATCH_END **/
 
     public void setInteracting(int barWindow, boolean interacting) {
         // hook for subclasses

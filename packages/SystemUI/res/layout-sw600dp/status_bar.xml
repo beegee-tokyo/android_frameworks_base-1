@@ -138,7 +138,7 @@
                 android:gravity="center_vertical|start"
                 />
 
-<!-- BEEGEE_TOKYO_PATCH_START  -->
+<!-- BEEGEE_PATCH_START  -->
             <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/top_recent"
                 android:layout_width="40dp"
                 android:layout_height="match_parent"
@@ -176,7 +176,7 @@
                 systemui:glowBackground="@drawable/ic_sysbar_highlight"
                 android:gravity="center_vertical|left"
                 />
-<!-- BEEGEE_TOKYO_PATCH_END -->
+<!-- BEEGEE_PATCH_END -->
                 
         </LinearLayout>
     </LinearLayout>
