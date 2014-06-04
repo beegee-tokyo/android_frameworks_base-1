@@ -956,7 +956,7 @@ public class NavigationBarView extends LinearLayout {
                 Settings.System.getUriFor(Settings.System.LOCKSCREEN_MODLOCK_ENABLED),
                 false, this);
 				/** BEEGEE_PATCH_START **/
-            resolver.registerContentObserver(Settings.System.getUriFor(
+                resolver.registerContentObserver(Settings.System.getUriFor(
                 Settings.System.NAV_BAR_POS), false, this);
 				/** BEEGEE_PATCH_END **/
 
