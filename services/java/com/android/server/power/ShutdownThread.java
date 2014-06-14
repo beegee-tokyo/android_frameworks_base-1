@@ -166,19 +166,43 @@ public final class ShutdownThread extends Thread {
                 KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
                 boolean locked = km.inKeyguardRestrictedInputMode() && km.isKeyguardSecure();
 
-/** BEEGEE_PATCH_START **/
-                if (!locked) {
-					sConfirmDialog = new AlertDialog.Builder(context)
-                        .setTitle(com.android.internal.R.string.reboot_system)
-                        .setMessage(com.android.internal.R.string.reboot_confirm)
-                        .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                beginShutdownSequence(context);
-                            }
-                        })
-                        .setNegativeButton(com.android.internal.R.string.no, null)
-                        .create();
-/** BEEGEE_PATCH_END **/
+                if (advancedReboot && !locked) {
+                    // Include options in power menu for rebooting into recovery or bootloader
+                    sConfirmDialog = new AlertDialog.Builder(context)
+                            .setTitle(titleResourceId)
+                            .setSingleChoiceItems(com.android.internal.R.array.shutdown_reboot_options, 0, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (which < 0)
+                                        return;
+
+                                    String actions[] = context.getResources().getStringArray(com.android.internal.R.array.shutdown_reboot_actions);
+
+                                    if (actions != null && which < actions.length)
+                                        mRebootReason = actions[which];
+                                }
+                            })
+                            .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    mReboot = true;
+                                    beginShutdownSequence(context);
+                                }
+                            })
+                            .setNegativeButton(com.android.internal.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    mReboot = false;
+                                    dialog.cancel();
+                                }
+                            })
+                            .create();
+                            sConfirmDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+                                public boolean onKey (DialogInterface dialog, int keyCode, KeyEvent event) {
+                                    if (keyCode == KeyEvent.KEYCODE_BACK) {
+                                        mReboot = false;
+                                        dialog.cancel();
+                                    }
+                                    return true;
+                                }
+                            });
                 }
             }
 
@@ -246,11 +270,7 @@ public final class ShutdownThread extends Thread {
     public static void reboot(final Context context, String reason, boolean confirm) {
         mReboot = true;
         mRebootSafeMode = false;
-/** BEEGEE_PATCH_START **/
-// In BeeGee ROM the reboot is direct available from top level power menu
-//        mRebootReason = reason;
-        mRebootReason = "";
-/** BEEGEE_PATCH_END **/
+        mRebootReason = reason;
         shutdownInner(context, confirm);
     }
 
@@ -267,45 +287,6 @@ public final class ShutdownThread extends Thread {
         mRebootReason = null;
         shutdownInner(context, confirm);
     }
-    
-/** BEEGEE_PATCH_START **/
-// In BeeGee ROM the reboot is direct available from top level power menu
-    /**
-     * Request a reboot into recovery, waiting for subsystems to clean up their
-     * state etc.  Must be called from a Looper thread in which its UI
-     * is shown.
-     *
-     * @param context Context used to display the shutdown progress dialog.
-     * @param reason code to pass to the kernel (e.g. "recovery"), or null.
-     * @param confirm true if user confirmation is needed before shutting down.
-     */
-
-    public static void recovery(final Context context, String reason, boolean confirm) {
-        mReboot = true;
-        mRebootSafeMode = false;
-        mRebootReason = "recovery";
-        shutdownInner(context, confirm);
-    }
-
-    /**
-     * Request a reboot into bootloader, waiting for subsystems to clean up their
-     * state etc.  Must be called from a Looper thread in which its UI
-     * is shown.
-     *
-     * @param context Context used to display the shutdown progress dialog.
-     * @param reason code to pass to the kernel (e.g. "recovery"), or null.
-     * @param confirm true if user confirmation is needed before shutting down.
-     */
-     //
-     // In BeeGee ROM the recovery is direct available from top level power menu
-     //
-    public static void bootloader(final Context context, String reason, boolean confirm) {
-        mReboot = true;
-        mRebootSafeMode = false;
-        mRebootReason = "bootloader";
-         shutdownInner(context, confirm);
-     }
-    /** BEEGEE_PATCH_END **/
 
     private static void beginShutdownSequence(Context context) {
         synchronized (sIsStartedGuard) {

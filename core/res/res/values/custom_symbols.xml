@@ -68,10 +68,4 @@
     <!-- On-The-Go -->
     <java-symbol type="string" name="global_action_onthego" />
     <java-symbol type="drawable" name="ic_lock_onthego" />
-
-    <!-- BEEGEE_PATCH_START -->
-    <java-symbol type="string" name="global_action_recovery" />
-    <java-symbol type="drawable" name="gb_recovery" />
-	 <!-- BEEGEE_PATCH_END -->
-
 </resources>

@@ -41,10 +41,4 @@
     <string name="animation_grow_shrink_left">Grow in (Left)</string>
     <string name="animation_grow_shrink_right">Grow in (Right)</string>
     <string name="animation_random">Random</string>
-	 
-	 <!-- BEEGEE_PATCH_START -->
-    <!-- label for item that reboots the phone in phone options dialog -->
-    <string name="global_action_recovery">Recovery</string>
-	 <!-- BEEGEE_PATCH_END -->
-
 </resources>
