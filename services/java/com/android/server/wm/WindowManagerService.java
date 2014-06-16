@@ -5336,7 +5336,21 @@ public class WindowManagerService extends IWindowManager.Stub
         ShutdownThread.rebootSafeMode(getUiContext(), confirm);
     }
 
+/** BEEGEE_PATCH_START **/
+    // Called by window manager policy.  Not exposed externally.
+      @Override
+    public void recovery() {
+        ShutdownThread.recovery(getUiContext(), null, true);
+    }
+
+    // Called by window manager policy.  Not exposed externally.
     @Override
+    public void bootloader() {
+        ShutdownThread.bootloader(getUiContext(), null, true);
+    }
+/** BEEGEE_PATCH_END **/
+
+@Override
     public void setInputFilter(IInputFilter filter) {
         if (!checkCallingPermission(android.Manifest.permission.FILTER_EVENTS, "setInputFilter()")) {
             throw new SecurityException("Requires FILTER_EVENTS permission");
