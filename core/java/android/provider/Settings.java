@@ -1272,6 +1272,19 @@ public final class Settings {
          * @hide
          */
         public static final String LONG_PRESS_KILL_DELAY = "long_press_kill_delay";
+
+        /**
+         * Allows to show the background activity back the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
+        /**
+         * Whether to disable hardware keys
+         * @hide
+         */
+        public static final String HARDWARE_KEYS_DISABLE = "hardware_keys_disable";
+
     }
 
     /**
@@ -2097,7 +2110,7 @@ public final class Settings {
          * @hide
          */
         public static final String BLUETOOTH_ACCEPT_ALL_FILES =
-            "bluetooth_accept_all_files";
+                "bluetooth_accept_all_files";
 
         /**
          * Bluetooth discoverability timeout.  If this value is nonzero, then
@@ -3469,6 +3482,12 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_SIGNAL_TEXT = "status_bar_signal";
+
+        /**
+         * Defines the custom path to use for UI sound effects (null for default)
+         * @hide
+         */
+        public static final String CUSTOM_SOUND_EFFECTS_PATH = "custom_sound_effects_path";
 
          /**
          * Whether to control brightness from status bar

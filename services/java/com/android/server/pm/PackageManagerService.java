@@ -5460,7 +5460,8 @@ public class PackageManagerService extends IPackageManager.Stub {
             int actualHashCode = getPackageHashCode(pkg);
             return storedHashCode != actualHashCode;
         } catch(IOException e) {
-            Log.e(TAG, "Could not read hash for " + pkg + "not compiling icon pack", e);
+            // all is good enough for government work here,
+            // we'll just return true and the icons will be processed
         } finally {
             IoUtils.closeQuietly(in);
             IoUtils.closeQuietly(dataInput);
@@ -5750,6 +5751,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     /**
+     * Checks for existance of resources.arsc in target apk, then
      * Compares the 32 bit hash of the target and overlay to those stored
      * in the idmap and returns true if either hash differs
      * @param targetPkg
@@ -5759,7 +5761,21 @@ public class PackageManagerService extends IPackageManager.Stub {
      */
     private boolean shouldCreateIdmap(PackageParser.Package targetPkg,
                                       PackageParser.Package overlayPkg) {
-        if (targetPkg == null || overlayPkg == null) return false;
+        if (targetPkg == null || targetPkg.mPath == null || overlayPkg == null) return false;
+
+        // Check if the target app has resources.arsc.
+        // If it does not, then there is nothing to idmap
+        ZipFile zfile = null;
+        try {
+            zfile = new ZipFile(targetPkg.mPath);
+            if (zfile.getEntry("resources.arsc") == null) return false;
+        } catch (IOException e) {
+            Log.e(TAG, "Error while checking resources.arsc on" + targetPkg.mPath, e);
+            return false;
+        } finally {
+            IoUtils.closeQuietly(zfile);
+        }
+
 
         int targetHash = getPackageHashCode(targetPkg);
         int overlayHash = getPackageHashCode(overlayPkg);
@@ -10470,10 +10486,12 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
 
         //Cleanup theme related data
-        if (ps.pkg.mOverlayTargets.size() > 0) {
-            uninstallThemeForAllApps(ps.pkg);
-        } else if (mOverlays.containsKey(ps.pkg.packageName)) {
-            uninstallThemeForApp(ps.pkg);
+        if (ps.pkg != null) {
+            if (ps.pkg.mOverlayTargets.size() > 0) {
+                uninstallThemeForAllApps(ps.pkg);
+            } else if (mOverlays.containsKey(ps.pkg.packageName)) {
+                uninstallThemeForApp(ps.pkg);
+            }
         }
 
         return ret;
