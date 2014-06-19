@@ -236,7 +236,7 @@
             />
     </FrameLayout>
 
-    <!-- BEEGEE_PATCH_END -->
+    <!-- BEEGEE_PATCH_START -->
     <!-- layout for portrait nav bar left -->
     <FrameLayout android:id="@+id/rot90left"
         android:layout_height="match_parent"
