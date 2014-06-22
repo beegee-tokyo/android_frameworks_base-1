@@ -5336,11 +5336,16 @@ public class WindowManagerService extends IWindowManager.Stub
         ShutdownThread.rebootSafeMode(getUiContext(), confirm);
     }
 
-/** BEEGEE_PATCH_START **/
     // Called by window manager policy.  Not exposed externally.
       @Override
     public void recovery() {
         ShutdownThread.recovery(getUiContext(), null, true);
+    }
+
+    // Called by window manager policy.  Not exposed externally.
+    @Override
+    public boolean isShutdownSequenceStarted() {
+        return ShutdownThread.isStarted();
     }
 
     // Called by window manager policy.  Not exposed externally.
