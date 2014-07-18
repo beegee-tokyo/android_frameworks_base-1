@@ -3038,6 +3038,18 @@ public final class Settings {
         public static final String LOCKSCREEN_MODLOCK_ENABLED = "lockscreen_modlock_enabled";
 
         /**
+         * Whether lid wakes the device
+         * @hide
+         */
+        public static final String LOCKSCREEN_LID_WAKE = "lockscreen_lid_wake";
+
+        /**
+         * Whether lid puts the device to sleep
+         * @hide
+         */
+        public static final String LOCKSCREEN_LID_SLEEP = "lockscreen_lid_sleep";
+
+        /**
          * @deprecated Use {@link android.provider.Settings.Global#LOW_BATTERY_SOUND}
          * instead
          * @hide
@@ -3569,27 +3581,6 @@ public final class Settings {
         public static final int STATUS_BAR_COLLAPSE_IF_EMPTIED = 1;
         /** @hide */
         public static final int STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE = 2;
-
-        /**
-         * Whether to use a separate delay for "slide to unlock" and security
-         * lock
-         * @hide
-         */
-        public static final String SCREEN_LOCK_SLIDE_DELAY_TOGGLE = "screen_lock_slide_delay_toggle";
-
-        /**
-         * How many ms to delay before enabling the "slide to unlock" screen
-         * lock when the screen goes off due to timeout
-         * @hide
-         */
-        public static final String SCREEN_LOCK_SLIDE_TIMEOUT_DELAY = "screen_lock_slide_timeout_delay";
-
-        /**
-         * How many ms to delay before enabling the "slide to unlock" screen
-         * lock when the screen is turned off by the user
-         * @hide
-         */
-        public static final String SCREEN_LOCK_SLIDE_SCREENOFF_DELAY = "screen_lock_slide_screenoff_delay";
 
         /**
          * Whether to use the custom quick unlock screen control
@@ -4370,13 +4361,6 @@ public final class Settings {
          * @hide
          */
         public static final String LOCKSCREEN_GLOWPAD_TORCH = "lockscreen_glowpad_torch";
-
-        /**
-         * Performance profile
-         * @see config_perf_profile_prop in frameworks/base/core/res/res/values/config.xml
-         * @hide
-         */
-        public static final String PERFORMANCE_PROFILE = "performance_profile";
 
         /**
          * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).

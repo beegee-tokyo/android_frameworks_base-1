@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MobileDataStateTracker extends BaseNetworkStateTracker {
 
     private static final String TAG = "MobileDataStateTracker";
-    private static final boolean DBG = true;
+    private static final boolean DBG = false;
     private static final boolean VDBG = false;
 
     private PhoneConstants.DataState mMobileDataState;
@@ -503,48 +503,6 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
             loge("unknown network type: " + dataNetworkType);
         }
         return "net.tcp.buffersize." + networkTypeStr;
-    }
-
-    /**
-     * Return the system properties name associated with the tcp delayed ack settings
-     * for this network.
-     */
-    @Override
-    public String getTcpDelayedAckPropName() {
-        String networkTypeStr = "default";
-        TelephonyManager tm = (TelephonyManager) mContext.getSystemService(
-                         Context.TELEPHONY_SERVICE);
-        if (tm != null) {
-            switch(tm.getNetworkType()) {
-                case TelephonyManager.NETWORK_TYPE_LTE:
-                    networkTypeStr = "lte";
-                    break;
-                default:
-                    break;
-            }
-        }
-        return "net.tcp.delack." + networkTypeStr;
-    }
-
-    /**
-     * Return the system properties name associated with the tcp user config flag
-     * for this network.
-     */
-    @Override
-    public String getTcpUserConfigPropName() {
-        String networkTypeStr = "default";
-        TelephonyManager tm = (TelephonyManager) mContext.getSystemService(
-                         Context.TELEPHONY_SERVICE);
-        if (tm != null) {
-            switch(tm.getNetworkType()) {
-                case TelephonyManager.NETWORK_TYPE_LTE:
-                    networkTypeStr = "lte";
-                    break;
-                default:
-                    break;
-            }
-        }
-        return "net.tcp.usercfg." + networkTypeStr;
     }
 
     /**

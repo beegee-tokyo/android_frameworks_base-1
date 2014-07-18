@@ -548,6 +548,8 @@ public class AudioService extends IAudioService.Stub {
         // array initialized by updateStreamVolumeAlias()
         updateStreamVolumeAlias(false /*updateVolumes*/);
         readPersistedSettings();
+        // must update link ring-notifications streams once the user preferences were read
+        updateLinkNotificationStreamVolumeAlias();
         mSettingsObserver = new SettingsObserver();
         //Update volumes steps before creatingStreamStates!
         initVolumeSteps();
@@ -744,11 +746,7 @@ public class AudioService extends IAudioService.Stub {
         }
         mStreamVolumeAlias[AudioSystem.STREAM_DTMF] = dtmfStreamAlias;
 
-        if (mLinkNotificationWithVolume) {
-            mStreamVolumeAlias[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_RING;
-        } else {
-            mStreamVolumeAlias[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_NOTIFICATION;
-        }
+        updateLinkNotificationStreamVolumeAlias();
 
         if (updateVolumes) {
             mStreamStates[AudioSystem.STREAM_DTMF].setAllIndexes(mStreamStates[dtmfStreamAlias]);
@@ -760,6 +758,14 @@ public class AudioService extends IAudioService.Stub {
                     0,
                     0,
                     mStreamStates[AudioSystem.STREAM_DTMF], 0);
+        }
+    }
+
+    private void updateLinkNotificationStreamVolumeAlias() {
+        if (mLinkNotificationWithVolume) {
+            mStreamVolumeAlias[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_RING;
+        } else {
+            mStreamVolumeAlias[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_NOTIFICATION;
         }
     }
 
@@ -1173,7 +1179,7 @@ public class AudioService extends IAudioService.Stub {
             }
 
             if (!checkSafeMediaVolume(streamTypeAlias, index, device)) {
-                mVolumePanel.postDisplaySafeVolumeWarning(flags);
+                mVolumePanel.postDisplaySafeVolumeWarning(flags | AudioManager.FLAG_SHOW_UI);
                 mPendingVolumeCommand = new StreamVolumeCommand(
                                                     streamType, index, flags, device);
             } else {
@@ -2267,19 +2273,10 @@ public class AudioService extends IAudioService.Stub {
     /** @see AudioManager#setBluetoothA2dpOn(boolean) */
     public void setBluetoothA2dpOn(boolean on) {
         synchronized (mBluetoothA2dpEnabledLock) {
-           int config = AudioSystem.FORCE_NONE;
-           mBluetoothA2dpEnabled = on;
-           config = AudioSystem.getForceUse(AudioSystem.FOR_MEDIA);
-           if((config == AudioSystem.FORCE_BT_A2DP) && (!mBluetoothA2dpEnabled)) {
-               config = AudioSystem.FORCE_NO_BT_A2DP;
-           } else if(mBluetoothA2dpEnabled) {
-               config = AudioSystem.FORCE_NONE;
-           }
-           Log.d(TAG, "BTEnabled "+mBluetoothA2dpEnabled+" config "+config);
-
+            mBluetoothA2dpEnabled = on;
             sendMsg(mAudioHandler, MSG_SET_FORCE_BT_A2DP_USE, SENDMSG_QUEUE,
                     AudioSystem.FOR_MEDIA,
-                    config,
+                    mBluetoothA2dpEnabled ? AudioSystem.FORCE_NONE : AudioSystem.FORCE_NO_BT_A2DP,
                     null, 0);
         }
     }

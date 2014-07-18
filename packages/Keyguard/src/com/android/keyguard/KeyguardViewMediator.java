@@ -18,8 +18,11 @@
 
 package com.android.keyguard;
 
+import android.graphics.Bitmap;
+
 import com.android.internal.policy.IKeyguardExitCallback;
 import com.android.internal.policy.IKeyguardShowCallback;
+
 import static android.provider.Settings.System.SCREEN_OFF_TIMEOUT;
 
 import android.app.Activity;
@@ -37,10 +40,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import android.database.ContentObserver;
-import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
+import android.os.FileObserver;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -59,10 +62,13 @@ import android.util.Slog;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.view.WindowManagerPolicy;
+import android.view.WindowManagerPolicy.WindowManagerFuncs;
 
 import com.android.internal.telephony.IccCardConstants;
 import com.android.internal.util.cm.QuietHoursUtils;
 import com.android.internal.widget.LockPatternUtils;
+
+import org.namelessrom.hardware.SmartCoverHW;
 
 /**
  * Mediates requests related to the keyguard.  This includes queries about the
@@ -259,7 +265,8 @@ public class KeyguardViewMediator {
 
     private ProfileManager mProfileManager;
 
-    private int mSlideLockDelay;
+    private FileObserver mSmartCoverObserver;
+    private int mLidState = WindowManagerPolicy.WindowManagerFuncs.LID_ABSENT;
 
     /**
      * The volume applied to the lock/unlock sounds.
@@ -379,7 +386,7 @@ public class KeyguardViewMediator {
                     doKeyguardLocked(null);
                 }
             }
-        };
+        }
 
         @Override
         public void onClockVisibilityChanged() {
@@ -498,16 +505,37 @@ public class KeyguardViewMediator {
         }
 
         void observe() {
-            ContentResolver cr = mContext.getContentResolver();
+            final ContentResolver cr = mContext.getContentResolver();
             cr.registerContentObserver(Settings.Global.getUriFor(
                     Settings.Global.LOCK_SOUND), false, this);
             cr.registerContentObserver(Settings.Global.getUriFor(
                     Settings.Global.UNLOCK_SOUND), false, this);
+
+            observeSmartWindow();
         }
 
         @Override
         public void onChange(boolean selfChange) {
             reloadSounds();
+        }
+    }
+
+    private void observeSmartWindow() {
+        if (SmartCoverHW.isSupported() && mSmartCoverObserver == null) {
+            if (DEBUG) Log.d(TAG, String.format("SmartCoverHW is supported, observing: %s",
+                    SmartCoverHW.getPath()));
+            mSmartCoverObserver = new FileObserver(SmartCoverHW.getPath(), FileObserver.MODIFY) {
+                @Override public void onEvent(final int event, final String s) {
+                    if (FileObserver.MODIFY != event) return;
+                    final int state = SmartCoverHW.isOpen() ? 1 : 0;
+                    final Intent intent = new Intent();
+                    intent.setAction(WindowManagerPolicy.ACTION_LID_STATE_CHANGED);
+                    intent.putExtra(WindowManagerPolicy.EXTRA_LID_STATE, state);
+                    mContext.sendBroadcast(intent);
+                    if (DEBUG) Log.d(TAG, String.format("SmartCoverHAL, state: %s", state));
+                }
+            };
+            mSmartCoverObserver.startWatching();
         }
     }
 
@@ -533,7 +561,10 @@ public class KeyguardViewMediator {
         mShowKeyguardWakeLock = mPM.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "show keyguard");
         mShowKeyguardWakeLock.setReferenceCounted(false);
 
-        mContext.registerReceiver(mBroadcastReceiver, new IntentFilter(DELAYED_KEYGUARD_ACTION));
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DELAYED_KEYGUARD_ACTION);
+        filter.addAction(WindowManagerPolicy.ACTION_LID_STATE_CHANGED);
+        mContext.registerReceiver(mBroadcastReceiver, filter);
         mContext.registerReceiver(mBroadcastReceiver, new IntentFilter(DISMISS_KEYGUARD_SECURELY_ACTION),
                 android.Manifest.permission.CONTROL_KEYGUARD, null);
 
@@ -557,8 +588,6 @@ public class KeyguardViewMediator {
         mKeyguardViewManager = new KeyguardViewManager(context, wm, mViewMediatorCallback,
                 mLockPatternUtils);
 
-        final ContentResolver cr = mContext.getContentResolver();
-
         mScreenOn = mPM.isScreenOn();
 
         mLockSounds = new SoundPool(1, AudioManager.STREAM_SYSTEM, 0);
@@ -567,7 +596,7 @@ public class KeyguardViewMediator {
                 com.android.internal.R.integer.config_lockSoundVolumeDb);
         mLockSoundVolume = (float)Math.pow(10, (float)lockSoundDefaultAttenuation/20);
 
-        SettingsObserver observer = new SettingsObserver(new Handler());
+        final SettingsObserver observer = new SettingsObserver(new Handler());
         observer.observe();
     }
 
@@ -646,26 +675,12 @@ public class KeyguardViewMediator {
     public void onScreenTurnedOff(int why) {
         synchronized (this) {
             mScreenOn = false;
-            mSlideLockDelay = why;
             if (DEBUG) Log.d(TAG, "onScreenTurnedOff(" + why + ")");
 
             mKeyguardDonePending = false;
 
-            // Prepare for handling Lock/Slide lock delay and timeout
-            boolean lockImmediately = false;
-            final ContentResolver cr = mContext.getContentResolver();
-            boolean separateSlideLockTimeoutEnabled = Settings.System.getInt(cr,
-                    Settings.System.SCREEN_LOCK_SLIDE_DELAY_TOGGLE, 0) == 1;
-            if (mLockPatternUtils.isSecure()) {
-                // Lock immediately based on setting if secure (user has a pin/pattern/password)
-                // This is retained as-is to ensue AOSP security integrity is maintained
-                lockImmediately = mLockPatternUtils.getPowerButtonInstantlyLocks();
-            } else {
-                // Unless a separate slide lock timeout is enabled, this "locks" the device when
-                // not secure to provide easy access to the camera while preventing unwanted input
-                lockImmediately = separateSlideLockTimeoutEnabled ? false
-                        : mLockPatternUtils.getPowerButtonInstantlyLocks();
-            }
+            // Lock immediately based on setting
+            final boolean lockImmediately = mLockPatternUtils.getPowerButtonInstantlyLocks();
 
             if (mExitSecureCallback != null) {
                 if (DEBUG) Log.d(TAG, "pending exit secure callback cancelled");
@@ -711,27 +726,6 @@ public class KeyguardViewMediator {
                 Settings.Secure.LOCK_SCREEN_LOCK_AFTER_TIMEOUT,
                 KEYGUARD_LOCK_AFTER_DELAY_DEFAULT);
 
-        // From CyanogenMod specific Settings
-        // If utilizing a secured lock screen, we should not utilize the slide
-        // delay and should let it default to the standard delay
-        boolean separateSlideLockTimeoutEnabled;
-        if (mLockPatternUtils.isSecure()) {
-            separateSlideLockTimeoutEnabled = false;
-        } else {
-            separateSlideLockTimeoutEnabled = Settings.System.getInt(cr,
-                    Settings.System.SCREEN_LOCK_SLIDE_DELAY_TOGGLE, 0) == 1;
-        }
-
-        int slideLockTimeoutDelay;
-        if (mSlideLockDelay == WindowManagerPolicy.OFF_BECAUSE_OF_TIMEOUT) {
-            slideLockTimeoutDelay = Settings.System.getInt(cr,
-                    Settings.System.SCREEN_LOCK_SLIDE_TIMEOUT_DELAY,
-                    KEYGUARD_LOCK_AFTER_DELAY_DEFAULT);
-        } else {
-            slideLockTimeoutDelay = Settings.System.getInt(cr,
-                    Settings.System.SCREEN_LOCK_SLIDE_SCREENOFF_DELAY, 0);
-        }
-
         // From DevicePolicyAdmin
         final long policyTimeout = mLockPatternUtils.getDevicePolicyManager()
                 .getMaximumTimeToLock(null, mLockPatternUtils.getCurrentUser());
@@ -742,7 +736,7 @@ public class KeyguardViewMediator {
             displayTimeout = Math.max(displayTimeout, 0); // ignore negative values
             timeout = Math.min(policyTimeout - displayTimeout, lockAfterTimeout);
         } else {
-            timeout = separateSlideLockTimeoutEnabled ? slideLockTimeoutDelay : lockAfterTimeout;
+            timeout = lockAfterTimeout;
         }
 
         if (timeout <= 0) {
@@ -801,12 +795,9 @@ public class KeyguardViewMediator {
             if (DEBUG) Log.d(TAG, "isKeyguardDisabled: keyguard is disabled by setting");
             return true;
         }
-        Profile profile = mProfileManager.getActiveProfile();
-        if (profile != null) {
-            if (profile.getScreenLockMode() == Profile.LockMode.DISABLE) {
-                if (DEBUG) Log.d(TAG, "isKeyguardDisabled: keyguard is disabled by profile");
-                return true;
-            }
+        if (mLockPatternUtils.getActiveProfileLockMode() == Profile.LockMode.DISABLE) {
+            if (DEBUG) Log.d(TAG, "isKeyguardDisabled: keyguard is disabled by profile");
+            return true;
         }
         return false;
     }
@@ -1142,6 +1133,14 @@ public class KeyguardViewMediator {
             } else if (DISMISS_KEYGUARD_SECURELY_ACTION.equals(intent.getAction())) {
                 synchronized (KeyguardViewMediator.this) {
                     dismiss();
+                }
+            } else if (WindowManagerPolicy.ACTION_LID_STATE_CHANGED.equals(intent.getAction())) {
+                final int state = intent.getIntExtra(WindowManagerPolicy.EXTRA_LID_STATE, WindowManagerFuncs.LID_ABSENT);
+                synchronized (KeyguardViewMediator.this) {
+                    if(state != mLidState) {
+                        mLidState = state;
+                        mUpdateMonitor.dispatchLidStateChange(state);
+                    }
                 }
             }
         }

@@ -1584,7 +1584,7 @@ public class ListView extends AbsListView {
             // These views will be reused if possible
             final int firstPosition = mFirstPosition;
             final RecycleBin recycleBin = mRecycler;
-            if (mRecycler.isActiveViewsInitialized() && dataChanged) {
+            if (dataChanged) {
                 for (int i = 0; i < childCount; i++) {
                     recycleBin.addScrapView(getChildAt(i), firstPosition+i);
                 }
@@ -2385,10 +2385,15 @@ public class ListView extends AbsListView {
                         (ViewGroup) selectedView, currentFocus, direction);
                 if (nextFocus != null) {
                     // do the math to get interesting rect in next focus' coordinates
-                    currentFocus.getFocusedRect(mTempRect);
-                    offsetDescendantRectToMyCoords(currentFocus, mTempRect);
-                    offsetRectIntoDescendantCoords(nextFocus, mTempRect);
-                    if (nextFocus.requestFocus(direction, mTempRect)) {
+                    Rect focusedRect = mTempRect;
+                    if (currentFocus != null) {
+                        currentFocus.getFocusedRect(focusedRect);
+                        offsetDescendantRectToMyCoords(currentFocus, focusedRect);
+                        offsetRectIntoDescendantCoords(nextFocus, focusedRect);
+                    } else {
+                        focusedRect = null;
+                    }
+                    if (nextFocus.requestFocus(direction, focusedRect)) {
                         return true;
                     }
                 }
@@ -2521,8 +2526,10 @@ public class ListView extends AbsListView {
         if (mItemsCanFocus && (focusResult == null)
                 && selectedView != null && selectedView.hasFocus()) {
             final View focused = selectedView.findFocus();
-            if (!isViewAncestorOf(focused, this) || distanceToView(focused) > 0) {
-                focused.clearFocus();
+            if (focused != null) {
+                if (!isViewAncestorOf(focused, this) || distanceToView(focused) > 0) {
+                    focused.clearFocus();
+                }
             }
         }
 

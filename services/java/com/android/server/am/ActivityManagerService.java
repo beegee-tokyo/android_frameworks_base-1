@@ -1114,7 +1114,14 @@ public final class ActivityManagerService extends ActivityManagerNative
                         }
                         return;
                     }
-                    if (mShowDialogs && !mSleeping && !mShuttingDown) {
+
+                    // Do not show the dialog for system ui to not block keyguard from showing
+                    if (proc.processName.equals("com.android.systemui")) {
+                        if (DEBUG) Slog.w(TAG, "Skipping crash dialog of " + proc);
+                        if (res != null) {
+                            res.set(0);
+                        }
+                    } else if (mShowDialogs && !mSleeping && !mShuttingDown) {
                         if (Settings.System.getInt(mContext.getContentResolver(),
                                      Settings.System.DISABLE_FC_NOTIFICATIONS, 0) != 1) {
                             Dialog d = new AppErrorDialog(getUiContext(),
@@ -1122,7 +1129,9 @@ public final class ActivityManagerService extends ActivityManagerNative
                             d.show();
                             proc.crashDialog = d;
                         } else {
-                            res.set(0);
+                            if (res != null) {
+                                res.set(0);
+                            }
                         }
                     } else {
                         // The device is asleep, so just pretend that the user
@@ -1816,12 +1825,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
             ServiceManager.addService(Context.ACTIVITY_SERVICE, m, true);
             ServiceManager.addService(ProcessStats.SERVICE_NAME, m.mProcessStats);
-            ServiceManager.addService("meminfo", new MemBinder(m));
-            ServiceManager.addService("gfxinfo", new GraphicsBinder(m));
-            ServiceManager.addService("dbinfo", new DbBinder(m));
-            if (MONITOR_CPU_USAGE) {
-                ServiceManager.addService("cpuinfo", new CpuBinder(m));
-            }
+            ServiceManager.addService("stateinfo", new InfoBinder(m));
             ServiceManager.addService("permission", new PermissionController(m));
 
             ApplicationInfo info =
@@ -1951,9 +1955,9 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
     }
 
-    static class MemBinder extends Binder {
+    static class InfoBinder extends Binder {
         ActivityManagerService mActivityManagerService;
-        MemBinder(ActivityManagerService activityManagerService) {
+        InfoBinder(ActivityManagerService activityManagerService) {
             mActivityManagerService = activityManagerService;
         }
 
@@ -1961,76 +1965,33 @@ public final class ActivityManagerService extends ActivityManagerNative
         protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
             if (mActivityManagerService.checkCallingPermission(android.Manifest.permission.DUMP)
                     != PackageManager.PERMISSION_GRANTED) {
+                if (MONITOR_CPU_USAGE) {
+                    pw.println("Permission Denial: can't dump cpuinfo from from pid="
+                            + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
+                            + " without permission " + android.Manifest.permission.DUMP);
+                }
+                pw.println("Permission Denial: can't dump dbinfo from from pid="
+                        + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
+                        + " without permission " + android.Manifest.permission.DUMP);
+                pw.println("Permission Denial: can't dump gfxinfo from from pid="
+                        + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
+                        + " without permission " + android.Manifest.permission.DUMP);
                 pw.println("Permission Denial: can't dump meminfo from from pid="
                         + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
                         + " without permission " + android.Manifest.permission.DUMP);
                 return;
             }
 
-            mActivityManagerService.dumpApplicationMemoryUsage(fd, pw, "  ", args, false, null);
-        }
-    }
-
-    static class GraphicsBinder extends Binder {
-        ActivityManagerService mActivityManagerService;
-        GraphicsBinder(ActivityManagerService activityManagerService) {
-            mActivityManagerService = activityManagerService;
-        }
-
-        @Override
-        protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-            if (mActivityManagerService.checkCallingPermission(android.Manifest.permission.DUMP)
-                    != PackageManager.PERMISSION_GRANTED) {
-                pw.println("Permission Denial: can't dump gfxinfo from from pid="
-                        + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
-                        + " without permission " + android.Manifest.permission.DUMP);
-                return;
-            }
-
-            mActivityManagerService.dumpGraphicsHardwareUsage(fd, pw, args);
-        }
-    }
-
-    static class DbBinder extends Binder {
-        ActivityManagerService mActivityManagerService;
-        DbBinder(ActivityManagerService activityManagerService) {
-            mActivityManagerService = activityManagerService;
-        }
-
-        @Override
-        protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-            if (mActivityManagerService.checkCallingPermission(android.Manifest.permission.DUMP)
-                    != PackageManager.PERMISSION_GRANTED) {
-                pw.println("Permission Denial: can't dump dbinfo from from pid="
-                        + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
-                        + " without permission " + android.Manifest.permission.DUMP);
-                return;
-            }
-
             mActivityManagerService.dumpDbInfo(fd, pw, args);
-        }
-    }
+            mActivityManagerService.dumpGraphicsHardwareUsage(fd, pw, args);
+            mActivityManagerService.dumpApplicationMemoryUsage(fd, pw, "  ", args, false, null);
 
-    static class CpuBinder extends Binder {
-        ActivityManagerService mActivityManagerService;
-        CpuBinder(ActivityManagerService activityManagerService) {
-            mActivityManagerService = activityManagerService;
-        }
-
-        @Override
-        protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-            if (mActivityManagerService.checkCallingPermission(android.Manifest.permission.DUMP)
-                    != PackageManager.PERMISSION_GRANTED) {
-                pw.println("Permission Denial: can't dump cpuinfo from from pid="
-                        + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
-                        + " without permission " + android.Manifest.permission.DUMP);
-                return;
-            }
-
-            synchronized (mActivityManagerService.mProcessCpuThread) {
-                pw.print(mActivityManagerService.mProcessCpuTracker.printCurrentLoad());
-                pw.print(mActivityManagerService.mProcessCpuTracker.printCurrentState(
-                        SystemClock.uptimeMillis()));
+            if (MONITOR_CPU_USAGE) {
+                synchronized (mActivityManagerService.mProcessCpuThread) {
+                    pw.print(mActivityManagerService.mProcessCpuTracker.printCurrentLoad());
+                    pw.print(mActivityManagerService.mProcessCpuTracker.printCurrentState(
+                            SystemClock.uptimeMillis()));
+                }
             }
         }
     }
@@ -2914,6 +2875,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             app.setPid(startResult.pid);
             app.usingWrapper = startResult.usingWrapper;
             app.removed = false;
+            app.killedByAm = false;
             synchronized (mPidsSelfLocked) {
                 this.mPidsSelfLocked.put(startResult.pid, app);
                 Message msg = mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);
