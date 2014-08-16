@@ -44,6 +44,7 @@ import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -118,6 +119,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private Action mSilentModeAction;
     private ToggleAction mAirplaneModeOn;
     private ToggleAction mExpandDesktopModeOn;
+    private ToggleAction mMobileDataOn;
+    private ToggleAction mWifiOn;
 
     private MyAdapter mAdapter;
 
@@ -130,6 +133,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private Profile mChosenProfile;
     private final boolean mShowSilentToggle;
     private final boolean mShowScreenRecord;
+    private ConnectivityManager mConnectivityManager;
+    private WifiManager mWifiManager;
 
     /**
      * @param context everything needs a context :(
@@ -150,9 +155,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         ThemeUtils.registerThemeChangeReceiver(context, mThemeChangeReceiver);
 
-        ConnectivityManager cm = (ConnectivityManager)
-                context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        mHasTelephony = cm.isNetworkSupported(ConnectivityManager.TYPE_MOBILE);
+        mConnectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        mHasTelephony = mConnectivityManager.isNetworkSupported(ConnectivityManager.TYPE_MOBILE);
+        mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
         // get notified of phone state changes
         TelephonyManager telephonyManager =
@@ -302,6 +307,54 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         };
         onAirplaneModeChanged();
 
+        mMobileDataOn = new ToggleAction(
+                R.drawable.ic_lock_mobile_data,
+                R.drawable.ic_lock_mobile_data_off,
+                R.string.global_actions_toggle_mobile_data,
+                R.string.global_actions_mobile_data_on_status,
+                R.string.global_actions_mobile_data_off_status) {
+
+            void onToggle(boolean on) {
+                mConnectivityManager.setMobileDataEnabled(!mConnectivityManager.getMobileDataEnabled());
+            }
+
+            @Override
+            protected void changeStateFromPress(boolean buttonOn) {
+            }
+
+            public boolean showDuringKeyguard() {
+                return true;
+            }
+
+            public boolean showBeforeProvisioning() {
+                return false;
+            }
+        };
+
+        mWifiOn = new ToggleAction(
+                R.drawable.ic_lock_wifi,
+                R.drawable.ic_lock_wifi_off,
+                R.string.global_actions_toggle_wifi,
+                R.string.global_actions_wifi_on_status,
+                R.string.global_actions_wifi_off_status) {
+
+            void onToggle(boolean on) {
+                mWifiManager.setWifiEnabled(!mWifiManager.isWifiEnabled());
+            }
+
+            @Override
+            protected void changeStateFromPress(boolean buttonOn) {
+            }
+
+            public boolean showDuringKeyguard() {
+                return true;
+            }
+
+            public boolean showBeforeProvisioning() {
+                return false;
+            }
+        };
+
         final ContentResolver cr = mContext.getContentResolver();
         mItems = new ArrayList<Action>();
 
@@ -418,7 +471,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     }
 
                     public boolean showDuringKeyguard() {
-                        return false;
+                        return true;
                     }
 
                     public boolean showBeforeProvisioning() {
@@ -520,6 +573,18 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 Settings.System.POWER_MENU_AIRPLANE_ENABLED, 1, UserHandle.USER_CURRENT) == 1;
         if (showAirplaneMode) {
             mItems.add(mAirplaneModeOn);
+        }
+
+        // next: mobile data
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_MOBILE_DATA_ENABLED, 0, UserHandle.USER_CURRENT) == 1) {
+            mItems.add(mMobileDataOn);
+        }
+
+        // next: wifi
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_WIFI_ENABLED, 0, UserHandle.USER_CURRENT) == 1) {
+            mItems.add(mWifiOn);
         }
 
         // next: bug report, if enabled
@@ -696,7 +761,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                         dialog.cancel();
                     }
                 }).create();
-        dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG);
+        dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
         dialog.show();
     }
 
@@ -786,6 +851,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private void prepareDialog() {
         refreshSilentMode();
         mAirplaneModeOn.updateState(mAirplaneState);
+        mMobileDataOn.updateState(mConnectivityManager.getMobileDataEnabled() ? ToggleAction.State.On : ToggleAction.State.Off);
+        mWifiOn.updateState(mWifiManager.isWifiEnabled() ? ToggleAction.State.On : ToggleAction.State.Off);
         mAdapter.notifyDataSetChanged();
         mDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
 

@@ -210,7 +210,6 @@ public final class Settings {
 
     /**
      * Activity Action: Show settings to allow configuration of Wi-Fi.
-
      * <p>
      * In some cases, a matching Activity may not exist, so ensure you
      * safeguard against this.
@@ -218,7 +217,6 @@ public final class Settings {
      * Input: Nothing.
      * <p>
      * Output: Nothing.
-
      */
     @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
     public static final String ACTION_WIFI_SETTINGS =
@@ -1223,13 +1221,6 @@ public final class Settings {
         public static final String ENABLE_ACRA = "enable_acra";
 
         /**
-         * Whether to use the new recents screen.
-         *
-         * @hide
-         */
-        public static final String NEW_RECENTS_SCREEN = "new_recents_screen";
-
-        /**
          * If On-The-Go should be displayed at the power menu.
          *
          * @hide
@@ -1290,6 +1281,18 @@ public final class Settings {
          * @hide
          */
         public static final String NON_INTRUSIVE_UI = "non_intrusive_ui";
+
+        /**
+         * Whether to allow swiping anywhere to switch to notifications / quicksettings
+         * @hide
+         */
+        public static final String QS_SWIPE_ANYWHERE = "qs_swipe_anywhere";
+
+        /**
+         * Whether the smart cover is activated or not
+         * @hide
+         */
+        public static final String SMART_COVER_ACTIVATED = "smart_cover_activated";
 
     }
 
@@ -3817,6 +3820,13 @@ public final class Settings {
 
         /**
          *
+         * Whether to scramble a pin unlock layout
+         * @hide
+         */
+        public static final String LOCKSCREEN_PIN_SCRAMBLE_LAYOUT = "lockscreen_scramble_pin_layout";
+
+        /**
+         * Whether to use the custom quick unlock screen control
          * @hide
          */
         public static final String ANIMATION_IME_EXIT = "animation_ime_exit";
@@ -3832,6 +3842,16 @@ public final class Settings {
          * @hide
          */
         public static final String CUSTOM_SCROLL_FRICTION = "custom_scroll_friction";
+
+        /**
+         * Preference for the button backlight. The value is enum.
+         * 0 for on touch
+         * 1 for off
+         * 2 for on
+         * 3 for force off
+         * 4 for force on
+         */
+        public static final String BUTTON_BACKLIGHT_MODE = "button_backlight_mode";
 
         /**
          * Determine custom fling velocity.
@@ -3980,6 +4000,19 @@ public final class Settings {
         public static final String LOCKSCREEN_NOTIFICATIONS_COLOR = "lockscreen_notifications_color";
 
         /**
+         * Controls whether clearable notifications are dismissed when removed from view.
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_DISMISS_NOTIFICATION = "lockscreen_notifications_dismiss_notification";
+
+        /**
+         * A list of packages to include low priority notifications from even when show low priority has been disabled
+         * This should be a string of packages separated by |
+         * @hide
+         */
+        public static final String LOCKSCREEN_NOTIFICATIONS_INCLUDED_APPS = "lockscreen_notifications_included_apps";
+
+        /**
          * Whether to remove the vibration from outgoing notifications during quiet hours.
          * @hide
          */
@@ -4124,6 +4157,18 @@ public final class Settings {
          * @hide
          */
         public static final String POWER_MENU_PROFILES_ENABLED = "power_menu_profiles_enabled";
+
+        /**
+         * Show MobileData in Power Menu
+         * @hide
+         */
+        public static final String POWER_MENU_MOBILE_DATA_ENABLED = "power_menu_mobile_data_enabled";
+
+        /**
+         * Show WiFi in Power Menu
+         * @hide
+         */
+        public static final String POWER_MENU_WIFI_ENABLED = "power_menu_wifi_enabled";
 
         /**
          * Enable Stylus Gestures
@@ -4288,6 +4333,8 @@ public final class Settings {
          * 4 - Voice search
          * 5 - In-app search
          * 6 - Launch Camera
+         * 7 - Last app
+         * 8 - Immersive mode
          * @hide
          */
         public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";

@@ -19,6 +19,7 @@
 
 package com.android.internal.policy.impl;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.IUiModeManager;
@@ -130,6 +131,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
+import java.util.List;
 
 import static android.view.WindowManager.LayoutParams.*;
 import static android.view.WindowManagerPolicy.WindowManagerFuncs.LID_ABSENT;
@@ -188,6 +190,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_VOICE_SEARCH = 4;
     private static final int KEY_ACTION_IN_APP_SEARCH = 5;
     private static final int KEY_ACTION_LAUNCH_CAMERA = 6;
+    private static final int KEY_ACTION_LAST_APP = 7;
+    private static final int KEY_ACTION_IMMERSIVE_MODE = 8;
     private static final int KEY_ACTION_BACK = 7;
     private static final int KEY_ACTION_HOME = 8;
 
@@ -1202,6 +1206,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 break;
             case KEY_ACTION_LAUNCH_CAMERA:
                 launchCameraAction();
+                break;
+            case KEY_ACTION_LAST_APP:
+                toggleLastApp();
+                break;
+            case KEY_ACTION_IMMERSIVE_MODE:
+                toggleImmersiveMode();
                 break;
             default:
                 break;
@@ -3288,6 +3298,50 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private void toggleLastApp() {
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        final ActivityManager am = (ActivityManager) mContext
+                .getSystemService(Activity.ACTIVITY_SERVICE);
+        String defaultHomePackage = "com.android.launcher";
+        intent.addCategory(Intent.CATEGORY_HOME);
+        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
+        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
+            defaultHomePackage = res.activityInfo.packageName;
+        }
+        final List<ActivityManager.RecentTaskInfo> tasks =
+                am.getRecentTasks(5, ActivityManager.RECENT_IGNORE_UNAVAILABLE);
+        // lets get enough tasks to find something to switch to
+        // Note, we'll only get as many as the system currently has - up to 5
+        int lastAppId = 0;
+        Intent lastAppIntent = null;
+        for (int i = 1; i < tasks.size() && lastAppIntent == null; i++) {
+            final String packageName = tasks.get(i).baseIntent.getComponent().getPackageName();
+            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
+                final ActivityManager.RecentTaskInfo info = tasks.get(i);
+                lastAppId = info.id;
+                lastAppIntent = info.baseIntent;
+            }
+        }
+        if (lastAppId > 0) {
+            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
+        } else if (lastAppIntent != null) {
+            // last task is dead, restart it.
+            lastAppIntent.addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+            try {
+                mContext.startActivityAsUser(lastAppIntent, UserHandle.CURRENT);
+            } catch (ActivityNotFoundException e) {
+                Log.w("Recent", "Unable to launch recent task", e);
+            }
+        }
+    }
+
+    private void toggleImmersiveMode() {
+        boolean on = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1;
+        Settings.System.putIntForUser(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, on ? 0 : 1, UserHandle.USER_CURRENT);
+    }
+
     /**
      * A home key -> launch home action was detected.  Take the appropriate action
      * given the situation with the keyguard.
@@ -3963,9 +4017,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                                 + mOverscanScreenHeight;
                     } else if (canHideNavigationBar()
                             && (sysUiFl & View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) != 0
-                            && (attrs.type == WindowManager.LayoutParams.TYPE_KEYGUARD
-                                || attrs.type == WindowManager.LayoutParams.TYPE_RECENTS_OVERLAY
-                                || (attrs.type >= WindowManager.LayoutParams.FIRST_APPLICATION_WINDOW
+                            && (attrs.type == WindowManager.LayoutParams.TYPE_KEYGUARD || (
+                                attrs.type >= WindowManager.LayoutParams.FIRST_APPLICATION_WINDOW
                              && attrs.type <= WindowManager.LayoutParams.LAST_SUB_WINDOW))) {
                         // Asking for layout as if the nav bar is hidden, lets the
                         // application extend into the unrestricted overscan screen area.  We
@@ -4104,7 +4157,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 } else if (canHideNavigationBar()
                         && (sysUiFl & View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) != 0
                         && (attrs.type == TYPE_TOAST
-                            || attrs.type == WindowManager.LayoutParams.TYPE_RECENTS_OVERLAY
                             || (attrs.type >= WindowManager.LayoutParams.FIRST_APPLICATION_WINDOW
                             && attrs.type <= WindowManager.LayoutParams.LAST_SUB_WINDOW))) {
                     // Asking for layout as if the nav bar is hidden, lets the

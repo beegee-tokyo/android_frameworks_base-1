@@ -376,8 +376,16 @@ public class NavigationBarView extends LinearLayout {
 
     private void setButtonVisibility(NavbarEditor.ButtonInfo info, boolean visible) {
         View findView = findButton(info);
-        if (findView != null) {
-            findView.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        if (findView == null) {
+            return;
+        }
+        int visibility = visible ? View.VISIBLE : View.INVISIBLE;
+        if (mSlotOneVisibility != -1 && findView.getId() == R.id.one) {
+            mSlotOneVisibility = visibility;
+        } else if (mSlotSixVisibility != -1 && findView.getId() == R.id.six) {
+            mSlotSixVisibility = visibility;
+        } else {
+            findView.setVisibility(visibility);
         }
     }
 
@@ -557,9 +565,11 @@ public class NavigationBarView extends LinearLayout {
             } else {
                 if (mSlotOneVisibility != -1) {
                     one.setVisibility(mSlotOneVisibility);
+                    mSlotOneVisibility = -1;
                 }
                 if (mSlotSixVisibility != -1) {
                     six.setVisibility(mSlotSixVisibility);
+                    mSlotSixVisibility = -1;
                 }
             }
         }
@@ -637,10 +647,12 @@ public class NavigationBarView extends LinearLayout {
                 && mLockUtils.getCameraEnabled();
 
         final boolean showNotifs = showSearch &&
-            Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.LOCKSCREEN_NOTIFICATIONS, 1) == 1 &&
-                Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.LOCKSCREEN_NOTIFICATIONS_PRIVACY_MODE, 0) == 0;
+                Settings.System.getBooleanForUser(mContext.getContentResolver(),
+                        Settings.System.LOCKSCREEN_NOTIFICATIONS,
+                        false, UserHandle.USER_CURRENT) &&
+                Settings.System.getBooleanForUser(mContext.getContentResolver(),
+                        Settings.System.LOCKSCREEN_NOTIFICATIONS_PRIVACY_MODE,
+                        false, UserHandle.USER_CURRENT);
         setVisibleOrGone(getSearchLight(), showSearch);
         setVisibleOrGone(getCameraButton(), showCamera && mModLockDisabled);
         setVisibleOrGone(getNotifsButton(), showNotifs && mWasNotifsButtonVisible);
@@ -802,6 +814,7 @@ public class NavigationBarView extends LinearLayout {
 
     public void setLeftInLandscape(boolean leftInLandscape) {
         mLeftInLandscape = leftInLandscape;
+        mBarTransitions.setLeftIfVertical(leftInLandscape);
         mDeadZone.setStartFromRight(leftInLandscape);
     }
 
@@ -1040,15 +1053,15 @@ public class NavigationBarView extends LinearLayout {
             // restore previous views in case the cursor keys WERE showing and
             // are should now be hidden while the IME is up.
             View one = getCurrentView().findViewById(mVertical ? R.id.six : R.id.one);
-            View capricaSix = getCurrentView().findViewById(mVertical ? R.id.one : R.id.six);
+            View six = getCurrentView().findViewById(mVertical ? R.id.one : R.id.six);
             if (mSlotOneVisibility != -1 && one != null) {
                 one.setVisibility(mSlotOneVisibility);
+                mSlotOneVisibility = -1;
             }
-            if (mSlotSixVisibility != -1 && capricaSix != null) {
-                capricaSix.setVisibility(mSlotSixVisibility);
+            if (mSlotSixVisibility != -1 && six != null) {
+                six.setVisibility(mSlotSixVisibility);
+                mSlotSixVisibility = -1;
             }
-            mSlotOneVisibility = -1;
-            mSlotSixVisibility = -1;
 
             // propogate settings
             setNavigationIconHints(mNavigationIconHints, true);

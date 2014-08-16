@@ -43,6 +43,20 @@
     <!-- status message in phone options dialog for when expand desktop mode is off -->
     <string name="global_actions_expanded_desktop_mode_off_status">Disabled</string>
 
+    <!-- label for item that toggle mobile data -->
+    <string name="global_actions_toggle_mobile_data">Mobile data</string>
+    <!-- status message in phone options dialog for when mobile data is on -->
+    <string name="global_actions_mobile_data_on_status">Mobile data is ON</string>
+    <!-- status message in phone options dialog for when mobile data is off -->
+    <string name="global_actions_mobile_data_off_status">Mobile data is OFF</string>
+
+    <!-- label for item that toggle wifi -->
+    <string name="global_actions_toggle_wifi">WiFi</string>
+    <!-- status message in phone options dialog for when wifi is on -->
+    <string name="global_actions_wifi_on_status">WiFi is ON</string>
+    <!-- status message in phone options dialog for when wifi is off -->
+    <string name="global_actions_wifi_off_status">WiFi is OFF</string>
+
     <!-- Button to reboot the phone, within the Phone Options dialog -->
     <string name="reboot_system" product="tablet">Reboot tablet</string>
     <string name="reboot_system" product="default">Reboot phone</string>
@@ -74,7 +88,7 @@
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_sendMockSms">send mock SMS messages</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
-    <string name="permdesc_sendMockSms">Allows the app to send mock SMS messages. This allows an app send SMS to trusted applications. Malicious apps could send messages continuously, blocking the device notification system and disrupting the user.</string>
+    <string name="permdesc_sendMockSms">Allows the app to send mock SMS messages. This allows an app to send messages to trusted applications. Malicious apps could send messages continuously, blocking the device\'s notification system and disrupting the user.</string>
 
     <!-- Storage description for the SD card on the dock. [CHAR LIMIT=NONE] -->
     <string name="storage_sd_dock_card">Dock SD card</string>
@@ -96,7 +110,7 @@
     <string name="stylus_app_not_installed">%s is not installed</string>
 
     <!-- Privacy Guard -->
-    <string name="permlab_changePrivacyGuardState">enable or disable privacy guard</string>
+    <string name="permlab_changePrivacyGuardState">enable or disable Privacy Guard</string>
     <string name="permdesc_changePrivacyGuardState">Allows the app to change whether another app runs with Privacy Guard. When an app is running with Privacy Guard, it will not have access to personal data such as contacts, call logs, or messages.</string>
     <string name="privacy_guard_notification">Privacy Guard active</string>
     <string name="privacy_guard_notification_detail"><xliff:g id="app">%1$s</xliff:g> will not be able to access personal data</string>

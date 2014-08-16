@@ -132,7 +132,6 @@ public class Clock extends TextView implements DemoMode, OnClickListener, OnLong
 
     public Clock(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
         if (isClickable()) {
             setOnClickListener(this);
             setOnLongClickListener(this);

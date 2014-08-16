@@ -16,9 +16,11 @@
 
 package com.android.systemui.statusbar.phone;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -27,6 +29,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.PorterDuff.Mode;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
@@ -48,11 +51,14 @@ import java.io.File;
 public class NotificationPanelView extends PanelView {
     public static final boolean DEBUG_GESTURES = false;
 
-    private static final float STATUS_BAR_SETTINGS_LEFT_PERCENTAGE = 0.8f;
-    private static final float STATUS_BAR_SETTINGS_RIGHT_PERCENTAGE = 0.2f;
+    private static final float STATUS_BAR_LEFT_PERCENTAGE = 0.7f;
+    private static final float STATUS_BAR_RIGHT_PERCENTAGE = 0.3f;
+
     private static final float STATUS_BAR_SWIPE_TRIGGER_PERCENTAGE = 0.05f;
     private static final float STATUS_BAR_SWIPE_VERTICAL_MAX_PERCENTAGE = 0.025f;
     private static final float STATUS_BAR_SWIPE_MOVE_PERCENTAGE = 0.2f;
+
+    private static final Handler mHandler = new Handler();
 
     Drawable mHandleBar;
     Drawable mBackgroundDrawable;
@@ -70,8 +76,53 @@ public class NotificationPanelView extends PanelView {
     private boolean mTrackingSwipe;
     private boolean mSwipeTriggered;
 
+    private int mQuickPulldownMode = 0;
+    private int mSmartPulldownMode = 0;
+
+    private boolean mSwipeAnywhere = false;
+
+    class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            final ContentResolver resolver = mContext.getContentResolver();
+
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_QUICK_PULLDOWN), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_SMART_PULLDOWN), false, this);
+            resolver.registerContentObserver(Settings.Nameless.getUriFor(
+                    Settings.Nameless.QS_SWIPE_ANYWHERE), false, this);
+
+            updateSettings();
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            updateSettings();
+        }
+
+    }
+
+    private void updateSettings() {
+        final ContentResolver resolver = mContext.getContentResolver();
+
+        mQuickPulldownMode = Settings.System.getInt(resolver,
+                Settings.System.QS_QUICK_PULLDOWN, 0);
+        mSmartPulldownMode = Settings.System.getInt(resolver,
+                Settings.System.QS_SMART_PULLDOWN, 0);
+
+        mSwipeAnywhere = Settings.Nameless.getBoolean(resolver,
+                Settings.Nameless.QS_SWIPE_ANYWHERE, false);
+    }
+
     public NotificationPanelView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        final SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe();
     }
 
     public void setStatusBar(PhoneStatusBar bar) {
@@ -155,26 +206,18 @@ public class NotificationPanelView extends PanelView {
                     mGestureStartX = event.getX(0);
                     mGestureStartY = event.getY(0);
                     mTrackingSwipe = isFullyExpanded() &&
-                        // Pointer is at the handle portion of the view?
-                        mGestureStartY > getHeight() - mHandleBarHeight - getPaddingBottom();
+                        (mSwipeAnywhere ||
+                            // If swipe anywhere is not allowed,
+                            // is the pointer at the handle portion of the view?
+                            mGestureStartY > getHeight() - mHandleBarHeight - getPaddingBottom());
                     mOkToFlip = getExpandedHeight() == 0;
-                    int quickPulldownMode = Settings.System.getInt(getContext().getContentResolver(),
-                            Settings.System.QS_QUICK_PULLDOWN, 0);
-                    int smartPulldownMode = Settings.System.getInt(getContext().getContentResolver(),
-                            Settings.System.QS_SMART_PULLDOWN, 0);
-                    if (smartPulldownMode == 1 && !mStatusBar.hasClearableNotifications()) {
-                        flip = true;
-                    } else if (smartPulldownMode == 2 && !mStatusBar.hasVisibleNotifications()) {
-                        flip = true;
-                    } else if (quickPulldownMode == 1 &&
-                            mGestureStartX > getWidth() * (1.0f - STATUS_BAR_SETTINGS_RIGHT_PERCENTAGE)) {
-                        flip = true;
-                    } else if (quickPulldownMode == 2 &&
-                            mGestureStartX < getWidth() * (1.0f - STATUS_BAR_SETTINGS_LEFT_PERCENTAGE)) {
-                        flip = true;
-                    } else if (quickPulldownMode == 3 &&
-                            mGestureStartX > getWidth() * (1.0f - STATUS_BAR_SETTINGS_LEFT_PERCENTAGE) &&
-                            mGestureStartX < getWidth() * (1.0f - STATUS_BAR_SETTINGS_RIGHT_PERCENTAGE)) {
+                    final float left = getWidth() * (1.0f - STATUS_BAR_LEFT_PERCENTAGE);
+                    final float right = getWidth() * (1.0f - STATUS_BAR_RIGHT_PERCENTAGE);
+                    if (mQuickPulldownMode == 1 && mGestureStartX > right ||
+                            mQuickPulldownMode == 2 && mGestureStartX < left ||
+                            mQuickPulldownMode == 3 && mGestureStartX > left && mGestureStartX < right ||
+                            mSmartPulldownMode == 1 && !mStatusBar.hasClearableNotifications() ||
+                            mSmartPulldownMode == 2 && !mStatusBar.hasVisibleNotifications()) {
                         flip = true;
                     }
                     break;

@@ -2022,8 +2022,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         mExpandedVisible = true;
         mPile.setLayoutTransitionsEnabled(true);
-        if (mNavigationBarView != null)
+
+        if (mNavigationBarView != null) {
             mNavigationBarView.setSlippery(true);
+        }
 
         updateCarrierLabelVisibility(true);
 
@@ -3484,8 +3486,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     }
 
     private void updateSettings() {
-        ContentResolver resolver = mContext.getContentResolver();
-        int autoBrightnessSetting = Settings.System.getIntForUser(
+        final ContentResolver resolver = mContext.getContentResolver();
+        final int autoBrightnessSetting = Settings.System.getIntForUser(
                 resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0, mCurrentUserId);
 
         if (autoBrightnessSetting == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) {
@@ -3497,7 +3499,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         updateCustomHeaderStatus();
 
-        int batteryStyle = Settings.System.getIntForUser(resolver,
+        final int batteryStyle = Settings.System.getIntForUser(resolver,
                 Settings.System.STATUS_BAR_BATTERY, 0, mCurrentUserId);
 
         BatteryMeterMode mode = BatteryMeterMode.BATTERY_METER_ICON_PORTRAIT;
@@ -3522,7 +3524,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 break;
         }
 
-        boolean showPercent = Settings.System.getIntForUser(resolver,
+        final boolean showPercent = Settings.System.getIntForUser(resolver,
                 Settings.System.STATUS_BAR_BATTERY_SHOW_PERCENT, 0, mCurrentUserId) == 1;
 
         mBatteryView.setMode(mode);
@@ -3536,7 +3538,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         mDockBatteryController.onBatteryMeterShowPercent(showPercent);
 
         if (mNavigationBarView != null) {
-            boolean navLeftInLandscape = Settings.System.getInt(resolver,
+            final boolean navLeftInLandscape = Settings.System.getInt(resolver,
                     Settings.System.NAVBAR_LEFT_IN_LANDSCAPE, 0) == 1;
             mNavigationBarView.setLeftInLandscape(navLeftInLandscape);
         }
@@ -3653,8 +3655,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (mNavigationBarView != null) {
             mNavigationBarView.updateResources(getNavbarThemedResources());
         }
-
-        rebuildRecentsScreen();
 
         // recreate StatusBarIconViews.
         for (int i = 0; i < nIcons; i++) {
@@ -3788,6 +3788,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     @Override
     public void setButtonDrawable(int buttonId, int iconId) {
+        if (mNavigationBarView == null) return;
         mNavigationBarView.setButtonDrawable(buttonId, iconId);
     }
 
