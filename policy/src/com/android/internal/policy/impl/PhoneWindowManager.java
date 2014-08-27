@@ -19,7 +19,6 @@
 
 package com.android.internal.policy.impl;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.IUiModeManager;
@@ -73,14 +72,13 @@ import android.os.UserHandle;
 import android.os.Vibrator;
 import android.provider.Settings;
 
-import com.android.internal.util.cm.DevUtils;
-import com.android.internal.util.nameless.NamelessActions;
-
 import android.service.dreams.DreamService;
 import android.service.dreams.IDreamManager;
 import android.service.gesture.EdgeGestureManager;
 import com.android.internal.os.DeviceKeyHandler;
 
+import com.android.internal.util.cm.ActionUtils;
+import com.android.internal.util.nameless.NamelessActions;
 import dalvik.system.DexClassLoader;
 
 import android.util.DisplayMetrics;
@@ -131,7 +129,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
-import java.util.List;
 
 import static android.view.WindowManager.LayoutParams.*;
 import static android.view.WindowManagerPolicy.WindowManagerFuncs.LID_ABSENT;
@@ -192,8 +189,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_LAUNCH_CAMERA = 6;
     private static final int KEY_ACTION_LAST_APP = 7;
     private static final int KEY_ACTION_IMMERSIVE_MODE = 8;
-    private static final int KEY_ACTION_BACK = 7;
-    private static final int KEY_ACTION_HOME = 8;
+    private static final int KEY_ACTION_BACK = 9;
+    private static final int KEY_ACTION_HOME = 10;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -1132,7 +1129,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private final Runnable mBackLongPress = new Runnable() {
         public void run() {
-            if (DevUtils.killForegroundApplication(mContext)) {
+            if (ActionUtils.killForegroundApp(mContext, mCurrentUserId)) {
                 performHapticFeedbackLw(null, HapticFeedbackConstants.LONG_PRESS, false);
                 Toast.makeText(mContext, R.string.app_killed_message, Toast.LENGTH_SHORT).show();
             }
@@ -1208,7 +1205,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 launchCameraAction();
                 break;
             case KEY_ACTION_LAST_APP:
-                toggleLastApp();
+                ActionUtils.switchToLastApp(mContext, mCurrentUserId);
                 break;
             case KEY_ACTION_IMMERSIVE_MODE:
                 toggleImmersiveMode();
@@ -3295,43 +3292,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             Slog.e(TAG, "RemoteException when showing recent apps", e);
             // re-acquire status bar service next time it is needed.
             mStatusBarService = null;
-        }
-    }
-
-    private void toggleLastApp() {
-        final Intent intent = new Intent(Intent.ACTION_MAIN);
-        final ActivityManager am = (ActivityManager) mContext
-                .getSystemService(Activity.ACTIVITY_SERVICE);
-        String defaultHomePackage = "com.android.launcher";
-        intent.addCategory(Intent.CATEGORY_HOME);
-        final ResolveInfo res = mContext.getPackageManager().resolveActivity(intent, 0);
-        if (res.activityInfo != null && !res.activityInfo.packageName.equals("android")) {
-            defaultHomePackage = res.activityInfo.packageName;
-        }
-        final List<ActivityManager.RecentTaskInfo> tasks =
-                am.getRecentTasks(5, ActivityManager.RECENT_IGNORE_UNAVAILABLE);
-        // lets get enough tasks to find something to switch to
-        // Note, we'll only get as many as the system currently has - up to 5
-        int lastAppId = 0;
-        Intent lastAppIntent = null;
-        for (int i = 1; i < tasks.size() && lastAppIntent == null; i++) {
-            final String packageName = tasks.get(i).baseIntent.getComponent().getPackageName();
-            if (!packageName.equals(defaultHomePackage) && !packageName.equals("com.android.systemui")) {
-                final ActivityManager.RecentTaskInfo info = tasks.get(i);
-                lastAppId = info.id;
-                lastAppIntent = info.baseIntent;
-            }
-        }
-        if (lastAppId > 0) {
-            am.moveTaskToFront(lastAppId, am.MOVE_TASK_NO_USER_ACTION);
-        } else if (lastAppIntent != null) {
-            // last task is dead, restart it.
-            lastAppIntent.addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
-            try {
-                mContext.startActivityAsUser(lastAppIntent, UserHandle.CURRENT);
-            } catch (ActivityNotFoundException e) {
-                Log.w("Recent", "Unable to launch recent task", e);
-            }
         }
     }
 
@@ -6097,8 +6057,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private void applyLidSwitchState() {
         mPowerManager.setKeyboardVisibility(isBuiltInKeyboardVisible());
-
         if (mLidState == LID_CLOSED && mLidControlsSleep) {
+            if (mFocusedWindow != null && (mFocusedWindow.getAttrs().flags
+                    & WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON) != 0) {
+                // if an application requests that the screen be turned on
+                // and there's a closed device cover, don't turn the screen off!
+                return;
+            }
             ITelephony telephonyService = getTelephonyService();
             try {
                 if (telephonyService != null && telephonyService.isIdle() && !keyguardOn()) {
