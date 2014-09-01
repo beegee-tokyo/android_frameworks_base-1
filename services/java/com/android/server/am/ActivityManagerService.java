@@ -343,6 +343,16 @@ public final class ActivityManagerService extends ActivityManagerNative
     // devices.
     private boolean mShowDialogs = true;
 
+    // Penalise Large applications going to background only for Low-RAM devices
+    private boolean mPenaliseLargeApps = ActivityManager.isLowRamDeviceStatic();
+
+    // ADJ to be set for new background app (if found to be large)
+    private int mPenalisedAdj = SystemProperties.getInt("ro.am.penalise_large_apps.adj",
+                                                   ProcessList.CACHED_APP_MAX_ADJ);
+
+    // Threshold Pss to be compared against new background app's Pss
+    private long mPenalisedThreshold;
+
     /**
      * Description of a request to start a new activity, which has been held
      * due to app switches being disabled.
@@ -2029,6 +2039,15 @@ public final class ActivityManagerService extends ActivityManagerNative
         mGrantFile = new AtomicFile(new File(systemDir, "urigrants.xml"));
 
         mHeadless = "1".equals(SystemProperties.get("ro.config.headless", "0"));
+
+        if (mPenaliseLargeApps == true) {
+            long cachedAppMaxMemLevel
+                    = mProcessList.getMemLevel(ProcessList.CACHED_APP_MAX_ADJ)/1024;
+            mPenalisedThreshold = SystemProperties.getLong(
+                    "ro.am.penalise_large_apps.pss", cachedAppMaxMemLevel);
+            Slog.i(TAG,"Large apps penalisation enabled. Threshold Pss = " + mPenalisedThreshold +
+                        ", ADJ = " + mPenalisedAdj);
+        }
 
         // User 0 is the first and only user that runs at boot.
         mStartedUsers.put(0, new UserStartedState(new UserHandle(0), true));
@@ -12041,6 +12060,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         boolean oomOnly = false;
         boolean isCompact = false;
         boolean localOnly = false;
+        boolean showFreeFormula2 = false;
         
         int opti = 0;
         while (opti < args.length) {
@@ -12055,6 +12075,8 @@ public final class ActivityManagerService extends ActivityManagerNative
                 dumpDalvik = true;
             } else if ("-d".equals(opt)) {
                 dumpDalvik = true;
+            } else if ("-f".equals(opt)) {
+                showFreeFormula2 = true;
             } else if ("-c".equals(opt)) {
                 isCompact = true;
             } else if ("--oom".equals(opt)) {
@@ -12064,6 +12086,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             } else if ("-h".equals(opt)) {
                 pw.println("meminfo dump options: [-a] [-d] [-c] [--oom] [process]");
                 pw.println("  -a: include all available information for each process.");
+                pw.println("  -f: include alternative memory free estimate.");
                 pw.println("  -d: include dalvik details when dumping process details.");
                 pw.println("  -c: dump in a compact machine-parseable representation.");
                 pw.println("  --oom: only show processes organized by oom adj.");
@@ -12156,6 +12179,8 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         long totalPss = 0;
         long cachedPss = 0;
+        long cachedPrivateDirty = 0;
+        long cachedPrivateClean = 0;
 
         Debug.MemoryInfo mi = null;
         for (int i = procs.size() - 1 ; i >= 0 ; i--) {
@@ -12177,7 +12202,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 if (mi == null) {
                     mi = new Debug.MemoryInfo();
                 }
-                if (dumpDetails || (!brief && !oomOnly)) {
+                if (dumpDetails || (!brief && !oomOnly) || showFreeFormula2) {
                     Debug.getMemoryInfo(pid, mi);
                 } else {
                     mi.dalvikPss = (int)Debug.getPss(pid, tmpLong);
@@ -12206,6 +12231,8 @@ public final class ActivityManagerService extends ActivityManagerNative
 
                 final long myTotalPss = mi.getTotalPss();
                 final long myTotalUss = mi.getTotalUss();
+                final long myTotalPrivateDirty = mi.getTotalPrivateDirty();
+                final long myTotalPrivateClean = mi.getTotalPrivateClean();
 
                 synchronized (this) {
                     if (r.thread != null && oomAdj == r.getSetAdjWithServices()) {
@@ -12233,6 +12260,8 @@ public final class ActivityManagerService extends ActivityManagerNative
 
                     if (oomAdj >= ProcessList.CACHED_APP_MIN_ADJ) {
                         cachedPss += myTotalPss;
+                        cachedPrivateDirty += myTotalPrivateDirty;
+                        cachedPrivateClean += myTotalPrivateClean;
                     }
 
                     for (int oomIndex=0; oomIndex<oomPss.length; oomIndex++) {
@@ -12347,6 +12376,15 @@ public final class ActivityManagerService extends ActivityManagerNative
                             pw.print(cachedPss); pw.print(" cached pss + ");
                             pw.print(memInfo.getCachedSizeKb()); pw.print(" cached + ");
                             pw.print(memInfo.getFreeSizeKb()); pw.println(" free)");
+                    if (showFreeFormula2) {
+                        pw.print(" Free RAM v2: "); pw.print(cachedPrivateDirty
+                                + cachedPrivateClean + memInfo.getCachedSizeKb()
+                                + memInfo.getFreeSizeKb()); pw.print(" kB (");
+                                pw.print(cachedPrivateDirty); pw.print(" cached private dirty + ");
+                                pw.print(cachedPrivateClean); pw.print(" cached private clean + ");
+                                pw.print(memInfo.getCachedSizeKb()); pw.print(" cached + ");
+                                pw.print(memInfo.getFreeSizeKb()); pw.println(" free)");
+                    }
                 } else {
                     pw.print("ram,"); pw.print(memInfo.getTotalSizeKb()); pw.print(",");
                     pw.print(cachedPss + memInfo.getCachedSizeKb()
@@ -15407,6 +15445,23 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
 
             app.setRawAdj = app.curRawAdj;
+        }
+
+        if ( (mPenaliseLargeApps == true) && ((app.curAdj == ProcessList.PREVIOUS_APP_ADJ)
+                || ((app.curAdj >= ProcessList.CACHED_APP_MIN_ADJ)
+                && (app.curAdj < ProcessList.CACHED_APP_MAX_ADJ))) ) {
+
+            // Validate the PSS to be compared against for penalisation
+            if (app.lastCachedPss == 0) {
+                app.lastCachedPss = Debug.getPss(app.pid, null);
+            }
+
+            if (app.lastCachedPss > mPenalisedThreshold) {
+                if (DEBUG_SWITCH || DEBUG_OOM_ADJ) Slog.i(
+                    TAG,"New BG app : " + app.processName + " is heavy! (pss = " +
+                    app.lastCachedPss + " kB). Forcing to ADJ " + mPenalisedAdj);
+                app.curAdj = mPenalisedAdj;
+            }
         }
 
         if (app.curAdj != app.setAdj) {
