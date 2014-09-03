@@ -21,7 +21,6 @@ package com.android.server.power;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -71,7 +70,7 @@ public final class ShutdownThread extends Thread {
     private static final int SHUTDOWN_VIBRATE_MS = 500;
 
     // state tracking
-    private static Object sIsStartedGuard = new Object();
+    private static final Object sIsStartedGuard = new Object();
     private static boolean sIsStarted = false;
 
     private static boolean mReboot;
@@ -172,7 +171,7 @@ public final class ShutdownThread extends Thread {
                 boolean isPrimary = UserHandle.getCallingUserId() == UserHandle.USER_OWNER;
 
                 // See if the advanced reboot menu is enabled (only if primary user) and check the keyguard state
-                boolean advancedReboot = isPrimary ? advancedRebootEnabled(context) : false;
+                boolean advancedReboot = isPrimary && advancedRebootEnabled(context);
                 KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
                 boolean locked = km.inKeyguardRestrictedInputMode() && km.isKeyguardSecure();
 
