@@ -3083,13 +3083,6 @@ public final class Settings {
         public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
 
         /**
-         * Screen-On Notification Light,
-         * should default to 1 (yes, Notification Light is enabled when screen is on)
-         * @hide
-         */
-        public static final String SCREEN_ON_NOTIFICATION_LED = "screen_on_notification_led";
-
-        /**
          * Lockscreen battery status visibility mode
          * 0 = show if charging
          * 1 = always show
@@ -3492,18 +3485,6 @@ public final class Settings {
         public static final String EXPANDED_SCREENTIMEOUT_MODE = "expanded_screentimeout_mode";
 
         /**
-         * Enable blocking wakelock
-         * @hide
-         */
-        public static final String WAKELOCK_BLOCKING_ENABLED = "wakelock_blocking_enabled";
-
-        /**
-         * List of wakelock blocks selected
-         * @hide
-         */
-        public static final String WAKELOCK_BLOCKING_LIST = "wakelock_blocking_list";
-
-        /**
         * Notification Power Widget - Custom Ring Mode
         * @hide
         */
@@ -3550,7 +3531,7 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
-
+ 
         /**
          * AM/PM Style for clock options
          * 0 - Normal AM/PM
@@ -3568,7 +3549,7 @@ public final class Settings {
          * @hide
          */
         public static final String STATUSBAR_CLOCK_STYLE = "statusbar_clock_style";
-
+ 
         /**
          * @hide
          * Shows custom date before clock time
@@ -3577,7 +3558,7 @@ public final class Settings {
          * 2 - Normal Date
          */
         public static final String STATUSBAR_CLOCK_DATE_DISPLAY = "statusbar_clock_date_display";
-
+ 
         /**
          * @hide
          * Sets the date string style
@@ -3586,7 +3567,7 @@ public final class Settings {
          * 2 - Uppercase
          */
         public static final String STATUSBAR_CLOCK_DATE_STYLE = "statusbar_clock_date_style";
-
+ 
          /**
          * @hide
          * Stores the java DateFormat string for the date
@@ -3624,12 +3605,6 @@ public final class Settings {
           */
         public static final String STATUS_BAR_NAVIGATION = "status_bar_navigation";
 /** BEEGEE_PATCH_END **/
-        /**
-         * Disable FC Notifications
-         * @hide
-         */
-        public static final String DISABLE_FC_NOTIFICATIONS = "disable_fc_notifications";
-
         /**
          * Whether to show the IME switcher in the status bar
          * @hide
