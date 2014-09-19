@@ -721,7 +721,7 @@ public final class Settings {
      */
     @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
     public static final String ACTION_NOTIFICATION_LISTENER_SETTINGS
-            = "android.settings.NOTIFICATION_LISTENER_SETTINGS";
+            = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
 
     /**
      * Activity Action: Show settings for video captioning.
@@ -1265,12 +1265,6 @@ public final class Settings {
         public static final String LONG_PRESS_KILL_DELAY = "long_press_kill_delay";
 
         /**
-         * Allows to show the background activity back the lockscreen
-         * @hide
-         */
-        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
-
-        /**
          * Whether to disable hardware keys
          * @hide
          */
@@ -1300,6 +1294,24 @@ public final class Settings {
          * @hide
          */
         public static final String POWER_MENU_REBOOT_ONECLICK = "power_menu_reboot_oneclick";
+
+        /**
+         * Allows to show the background activity back the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
+        /**
+         * Radius of the blur lockscreen background
+         * @hide
+         */
+        public static final String LOCKSCREEN_BLUR_RADIUS = "lockscreen_blur_radius";
+
+        /**
+         * Whether the recents bottom bar should be shown or not
+         * @hide
+         */
+        public static final String RECENTS_BAR = "recents_bar";
 
     }
 
@@ -3234,6 +3246,13 @@ public final class Settings {
         public static final String QUICK_SETTINGS_TILES_VIBRATE = "quick_settings_tiles_vibrate";
 
         /**
+         * Global stats collection
+         *
+         * @hide
+         */
+        public static final String STATS_COLLECTION = "stats_collection";
+
+        /**
          * Quick Settings Panel Tiles to Use
          *
          * @hide
@@ -4344,18 +4363,6 @@ public final class Settings {
          * @hide
          */
         public static final String NAVBAR_FORCE_ENABLE = "navbar_force_enable";
-
-        /**
-         * Enable touches in screen recording
-         * @hide
-         */
-        public static final String SREC_ENABLE_TOUCHES = "srec_enable_touches";
-
-        /**
-         * Enable microphone as audio input in screen recording
-         * @hide
-         */
-        public static final String SREC_ENABLE_MIC = "srec_enable_mic";
 
         /**
          * Volume key controls ringtone or media sound stream

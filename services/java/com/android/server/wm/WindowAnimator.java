@@ -39,10 +39,8 @@ public class WindowAnimator {
     private static final String TAG = "WindowAnimator";
 
     final WindowManagerService mService;
-    final Context              mContext;
-    final WindowManagerPolicy  mPolicy;
-
-    private final AudioManager mAudioManager;
+    final Context mContext;
+    final WindowManagerPolicy mPolicy;
 
     boolean mAnimating;
 
@@ -62,7 +60,7 @@ public class WindowAnimator {
     WindowState mWindowDetachedWallpaper = null;
 
     WindowStateAnimator mUniverseBackground = null;
-    int                 mAboveUniverseLayer = 0;
+    int mAboveUniverseLayer = 0;
 
     int mBulkUpdateParams = 0;
     Object mLastWindowFreezeSource;
@@ -79,18 +77,15 @@ public class WindowAnimator {
     static final int KEYGUARD_ANIMATING_OUT = 3;
     int mForceHiding = KEYGUARD_NOT_SHOWN;
 
+    private AudioManager mAudioManager;
+
     private String forceHidingToString() {
         switch (mForceHiding) {
-            case KEYGUARD_NOT_SHOWN:
-                return "KEYGUARD_NOT_SHOWN";
-            case KEYGUARD_ANIMATING_IN:
-                return "KEYGUARD_ANIMATING_IN";
-            case KEYGUARD_SHOWN:
-                return "KEYGUARD_SHOWN";
-            case KEYGUARD_ANIMATING_OUT:
-                return "KEYGUARD_ANIMATING_OUT";
-            default:
-                return "KEYGUARD STATE UNKNOWN " + mForceHiding;
+            case KEYGUARD_NOT_SHOWN:    return "KEYGUARD_NOT_SHOWN";
+            case KEYGUARD_ANIMATING_IN: return "KEYGUARD_ANIMATING_IN";
+            case KEYGUARD_SHOWN:        return "KEYGUARD_SHOWN";
+            case KEYGUARD_ANIMATING_OUT:return "KEYGUARD_ANIMATING_OUT";
+            default: return "KEYGUARD STATE UNKNOWN " + mForceHiding;
         }
     }
 
@@ -98,6 +93,7 @@ public class WindowAnimator {
         mService = service;
         mContext = service.mContext;
         mPolicy = service.mPolicy;
+
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
 
         mAnimationRunnable = new Runnable() {
@@ -248,9 +244,9 @@ public class WindowAnimator {
                         mService.mFocusMayChange = true;
                     }
                     if (win.isReadyForDisplay()) {
-                        if (mAudioManager.isMusicActive() || Settings.Nameless.getInt(
+                        if (mAudioManager.isMusicActive() || Settings.Nameless.getBoolean(
                                 mContext.getContentResolver(),
-                                Settings.Nameless.LOCKSCREEN_SEE_THROUGH, 0) == 0) {
+                                Settings.Nameless.LOCKSCREEN_SEE_THROUGH, false)) {
                             if (nowAnimating) {
                                 if (winAnimator.mAnimationIsEntrance) {
                                     mForceHiding = KEYGUARD_ANIMATING_IN;
@@ -258,13 +254,13 @@ public class WindowAnimator {
                                     mForceHiding = KEYGUARD_ANIMATING_OUT;
                                 }
                             } else {
-                                mForceHiding =
-                                        win.isDrawnLw() ? KEYGUARD_SHOWN : KEYGUARD_NOT_SHOWN;
+                                mForceHiding = KEYGUARD_SHOWN;
                             }
                         } else {
                             mForceHiding = KEYGUARD_NOT_SHOWN;
                         }
                     }
+
                     if (WindowManagerService.DEBUG_VISIBILITY) Slog.v(TAG,
                             "Force hide " + mForceHiding
                             + " hasSurface=" + win.mHasSurface

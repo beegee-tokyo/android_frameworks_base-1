@@ -38,9 +38,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-
 import android.database.ContentObserver;
-import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
@@ -606,7 +604,7 @@ public class KeyguardViewMediator {
         }
     }
 
-    public void setBackgroundBitmap(final Bitmap bmp) {
+    public void setBackgroundBitmap(Bitmap bmp) {
         mKeyguardViewManager.setBackgroundBitmap(bmp);
     }
 
@@ -1297,6 +1295,13 @@ public class KeyguardViewMediator {
 
             // If music is playing, don't play the sound
             if (mAudioManager.isMusicActive()) return;
+
+            // If user is in a call, don't play the sound
+            TelephonyManager tm = (TelephonyManager) mContext.
+                    getSystemService(Context.TELEPHONY_SERVICE);
+            if (tm != null  && (tm.isOffhook() || tm.isRinging())) {
+                return;
+            }
 
             mLockSoundStreamId = mLockSounds.play(whichSound,
                     mLockSoundVolume, mLockSoundVolume, 1/*priortiy*/, 0/*loop*/, 1.0f/*rate*/);
