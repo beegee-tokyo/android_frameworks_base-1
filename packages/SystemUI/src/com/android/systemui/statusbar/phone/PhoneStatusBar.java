@@ -587,8 +587,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         addNavigationBar();
 
-        SettingsObserver observer = new SettingsObserver(mHandler);
-        observer.observe();
+        mSettingsObserver = new SettingsObserver(mHandler);
+        mSettingsObserver.observe();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
@@ -2671,9 +2671,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mGestureRec.add(event);
         }
 
-        if (mBrightnessControl) {
-            brightnessControl(event);
-        }
+        processSwipeEvent(event);
+
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return true;
         }
@@ -2689,6 +2688,13 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             }
         }
         return false;
+    }
+
+    private void processSwipeEvent(final MotionEvent event) {
+        // TODO: more
+        if (mBrightnessControl) {
+            brightnessControl(event);
+        }
     }
 
     public GestureRecorder getGestureRecorder() {
@@ -3530,6 +3536,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mBrightnessControl = Settings.System.getIntForUser(resolver,
                     Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0, mCurrentUserId) == 1;
         }
+        // TODO: cool stuff
 
         updateCustomHeaderStatus();
 
@@ -4122,7 +4129,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     }
 
     private void setNotificationAlpha() {
-        if (mPile == null || mNotificationData == null) {
+        if (mPile == null) {
             return;
         }
         float notifAlpha = Settings.System.getFloatForUser(
