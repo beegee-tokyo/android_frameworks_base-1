@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-/*
-** Copyright 2012, The Android Open Source Project
+/* Copyright 2012, The Android Open Source Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -17,9 +16,6 @@
 */
 -->
 <resources>
-    <integer name="kg_carousel_angle">75</integer>
-    <integer name="kg_glowpad_rotation_offset">0</integer>
-
-    <!-- Minimum prediction score required to pass a gesture as recognized -->
-    <integer name="min_gesture_prediction_score">2</integer>
+    <!-- Volume Panel -->
+    <color name="volume_panel_bg">#cc111111</color>
 </resources>
