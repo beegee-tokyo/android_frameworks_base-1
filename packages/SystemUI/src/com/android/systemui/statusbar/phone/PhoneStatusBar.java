@@ -88,6 +88,7 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewPropertyAnimator;
 import android.view.ViewStub;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
@@ -321,6 +322,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     int mTrackingPosition; // the position of the top of the tracking view.
 
     // ticker
+    private boolean mTickerEnabled;
     private Ticker mTicker;
     private View mTickerView;
     private boolean mTicking;
@@ -443,6 +445,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVBAR_LEFT_IN_LANDSCAPE),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TICKER_ENABLED),
                     false, this, UserHandle.USER_ALL);
 /** BEEGEE_PATCH_START **/
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -3024,6 +3029,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (mRecreating) {
             return;
         }
+
+        // user has ticker disabled
+        if (!mTickerEnabled) return;
+
         // no ticking in lights-out mode
         if (!areLightsOn()) return;
 
@@ -3595,6 +3604,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mNavigationBarView.setLeftInLandscape(navLeftInLandscape);
         }
 
+        mTickerEnabled = Settings.System.getBooleanForUser(resolver,
+                Settings.System.TICKER_ENABLED, true, UserHandle.USER_CURRENT);
+
         mClockEnabled = Settings.System.getIntForUser(resolver,
                 Settings.System.STATUS_BAR_CLOCK, 1, mCurrentUserId) != 0;
         updateClockVisibility();
@@ -3708,6 +3720,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         copyNotifications(notifications, mNotificationData);
         mNotificationData.clear();
 
+        // Halts the old ticker. A new ticker is created in makeStatusBarView() so
+        // this MUST happen before makeStatusBarView();
+        mTicker.halt();
+
         makeStatusBarView();
         repositionNavigationBar();
         addHeadsUpView();
@@ -3735,7 +3751,19 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
         checkBarModes();
-        mRecreating = false;
+
+        // Stop the command queue until the new status bar container settles and has a layout pass
+        mCommandQueue.pause();
+        mStatusBarContainer.requestLayout();
+        mStatusBarContainer.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                mStatusBarContainer.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                mCommandQueue.resume();
+                mRecreating = false;
+            }
+        });
     }
 
     private void removeAllViews(ViewGroup parent) {
